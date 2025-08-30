@@ -53,6 +53,7 @@ end
 
 function onLoad()
     local setCode = getSetCode()
+
     self.createButton({
         click_function = "null",
         function_owner = self,
@@ -80,6 +81,11 @@ function onLoad()
         height = 0,
         font_size = 500,
     })
+
+    if #setCode > 3 then
+        self.editButton({ index = 0, font_size = 160 })
+        self.editButton({ index = 1, font_size = 250 })
+    end
 end
 
 function onUpdate()
@@ -92,11 +98,20 @@ end
 
 function checkDescription()
     local description = self.getDescription()
-    local setCode = getSetCode()
+
     if description ~= lastDescription then
+        local setCode = getSetCode()
         lastDescription = description
         self.editButton({ index = 0, label = setCode .. " Boosters" })
         self.editButton({ index = 1, label = setCode })
+
+        if #setCode > 3 then
+            self.editButton({ index = 0, font_size = 160 })
+            self.editButton({ index = 1, font_size = 250 })
+        else
+            self.editButton({ index = 0, font_size = 220 })
+            self.editButton({ index = 1, font_size = 500 })
+        end
     end
 end
 
@@ -117,15 +132,22 @@ function makeBoosterLabelParams(label)
 end
 
 function getSetCode()
-    local captured_text = self.getDescription():match("SET:%s*([^\n]+)")
+    local setCode = "mystery"
 
+    -- Trim leading/trailing whitespace from the captured text
+    -- This makes sure " SET: M15 " becomes "M15"
+    local captured_text = self.getDescription():match("SET:%s*([^\n]+)")
     if captured_text then
-        -- Trim leading/trailing whitespace from the captured text
-        -- This makes sure " SET: M15 " becomes "M15"
-        return captured_text:match("^%s*(.-)%s*$")
+        setCode = captured_text:match("^%s*(.-)%s*$")
     end
 
-    return "mystery"
+    if #setCode > 3 then
+        setCode = string.lower(setCode):gsub("^%l", string.upper)
+    else
+        setCode = string.upper(setCode)
+    end
+
+    return setCode
 end
 
 local BoosterPacks = {}

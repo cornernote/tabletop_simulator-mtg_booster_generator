@@ -34,7 +34,7 @@ function onObjectLeaveContainer(container, leave_object)
                 Wait.condition(
                         function()
                             local objectData = leave_object.getData()
-                            objectData.ContainedObjects = { boosterDataCache[currentBoosterID] }
+                            objectData.ContainedObjects = boosterDataCache[currentBoosterID]
                             leave_object.destruct()
                             local generatedBooster = spawnObjectData({ data = objectData })
 
@@ -452,14 +452,14 @@ function fetchDeckData(urlTable, boosterID)
 
     local requestsPending = #urlTable
     local requestsCompleted = 0
+    local requestErrors = {}
 
     for i, url in ipairs(urlTable) do
         enqueueRequest(url, function(request)
             if request.response_code ~= 200 then
                 local errorInfo = JSON.decode(request.text)
                 local message = errorInfo and errorInfo.details or (request.error .. ": " .. request.text)
-                broadcastToAll(message, "Red")
-                print(message)
+                table.insert(requestErrors, { url = url, message = message })
             else
                 local cardData = createCardDataFromJSON(request.text, i)
                 if cardData then
@@ -474,9 +474,9 @@ function fetchDeckData(urlTable, boosterID)
 
     Wait.condition(
             function()
-                if #deck.ContainedObjects ~= #urlTable then
-                    return
-                end
+                --if #deck.ContainedObjects ~= #urlTable then
+                --    return
+                --end
 
                 local cardNames = {}
                 local hasDuplicates = false
@@ -491,7 +491,24 @@ function fetchDeckData(urlTable, boosterID)
                 if hasDuplicates then
                     fetchDeckData(urlTable, boosterID)
                 else
-                    boosterDataCache[boosterID] = deck
+                    local boosterContents = { deck }
+                    if #requestErrors > 0 then
+                        for _, error in ipairs(requestErrors) do
+                            local notecard = {
+                                Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
+                                Name = "Notecard",
+                                Nickname = "Booster Generation Errors",
+                                Description = "url: " .. error.url .. "\n\n" .. error.message,
+                                Grid = false,
+                                Snap = false,
+                            }
+                            table.insert(boosterContents, notecard)
+                        end
+
+                        requestErrors = {}
+                    end
+
+                    boosterDataCache[boosterID] = boosterContents
                 end
             end,
             function()

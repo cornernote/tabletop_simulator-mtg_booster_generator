@@ -1,7 +1,7 @@
 {
   "SaveName": "Custom",
-  "EpochTime": 1756560228,
-  "Date": "8/30/2025 10:53:48 PM",
+  "EpochTime": 1756560348,
+  "Date": "8/30/2025 10:55:48 PM",
   "VersionNumber": "v13.3",
   "GameMode": "DND Measurement Injector",
   "GameType": "Utility",
@@ -665,15 +665,15 @@
         "posX": -13.1749992,
         "posY": 2.58781767,
         "posZ": 8.525,
-        "rotX": -2.34786035E-06,
+        "rotX": -1.06722E-06,
         "rotY": 179.998016,
-        "rotZ": 1.00155012E-06,
+        "rotZ": -1.669373E-07,
         "scaleX": 8.048128,
         "scaleY": 3.25563526,
         "scaleZ": 5.16360474
       },
       "Nickname": "[FFDA00]ANY[ffffff] MTG Booster Box",
-      "Description": "SET: TDM\n\nChange the set code to change the boosters.",
+      "Description": "SET: TDM",
       "GMNotes": "",
       "AltLookAngle": {
         "x": 0.0,

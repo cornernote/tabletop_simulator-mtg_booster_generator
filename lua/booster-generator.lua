@@ -92,9 +92,11 @@ end
 
 function checkDescription()
     local description = self.getDescription()
+    local setCode = getSetCode()
     if description ~= lastDescription then
         lastDescription = description
-        self.editButton({ index = 0, label = getSetCode() .. " Boosters" })
+        self.editButton({ index = 0, label = setCode .. " Boosters" })
+        self.editButton({ index = 1, label = setCode })
     end
 end
 

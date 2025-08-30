@@ -9,7 +9,7 @@ local boosterCount = 0
 local boosterDataCache = {}
 local cardStackDescription = ""
 local lastDescription = ""
-local pollInterval = 1.0  -- seconds
+local pollInterval = 0.15  -- seconds, limit scryfall API requests to <10/sec
 local timePassed = 0
 
 --- Function Hooks ---
@@ -93,6 +93,7 @@ function onUpdate()
     if timePassed >= pollInterval then
         timePassed = 0
         checkDescription()
+        processRequestQueue()
     end
 end
 
@@ -411,6 +412,26 @@ local setCodeMapping = {
     ['2xm'] = 'twoxm'
 }
 
+--- Rate Limiting State ---
+local requestQueue = {}
+local requestsThisMinute = 0
+local resetTime = os.time()
+
+-- enqueue requests instead of calling WebRequest.get directly
+function enqueueRequest(url, callback)
+    table.insert(requestQueue, { url = url, callback = callback })
+end
+
+-- process up to 5 requests per minute
+function processRequestQueue()
+    if #requestQueue == 0 then
+        return
+    end
+    local req = table.remove(requestQueue, 1)
+    WebRequest.get(req.url, req.callback)
+end
+
+--- Scryfall API and Deck Handling ---
 function getScryfallQueryTable()
     local setCode = string.lower(getSetCode())
     local mappedSetCode = setCodeMapping[setCode] or setCode
@@ -418,7 +439,6 @@ function getScryfallQueryTable()
     return packGenerator(setCode)
 end
 
---- Scryfall API and Deck Handling ---
 function fetchDeckData(urlTable, boosterID)
     local deck = {
         Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 180, rotZ = 180, scaleX = 1, scaleY = 1, scaleZ = 1 },
@@ -434,7 +454,7 @@ function fetchDeckData(urlTable, boosterID)
     local requestsCompleted = 0
 
     for i, url in ipairs(urlTable) do
-        WebRequest.get(url, function(request)
+        enqueueRequest(url, function(request)
             if request.response_code ~= 200 then
                 local errorInfo = JSON.decode(request.text)
                 local message = errorInfo and errorInfo.details or (request.error .. ": " .. request.text)
@@ -454,7 +474,6 @@ function fetchDeckData(urlTable, boosterID)
 
     Wait.condition(
             function()
-                -- Guard against processing before all requests are complete
                 if #deck.ContainedObjects ~= #urlTable then
                     return
                 end

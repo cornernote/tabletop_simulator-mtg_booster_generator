@@ -121,13 +121,13 @@ function makeBoosterLabelParams(label)
         label = label,
         click_function = 'null',
         function_owner = self,
-        position = { 0, 0.2, -1.6 },
+        position = { 0, 0.2, -1.7 },
         rotation = { 0, 0, 0 },
         width = 0,
         height = 0,
         font_size = 100,
         color = { 0, 0, 0, 0 },
-        font_color = { 1, 1, 1, 100 },
+        font_color = { 0, 0, 0, 95 },
     }
 end
 

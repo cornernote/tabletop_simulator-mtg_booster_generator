@@ -1,0 +1,46 @@
+[h1]Any MTG Booster Generator[/h1]
+
+Ever wanted to crack open fresh Magic: The Gathering booster packs right inside Tabletop Simulator? This mod brings that excitement to your virtual table!
+
+With a single container and a set code, you can instantly generate boosters from nearly any MTG set, powered by [url=https://scryfall.com/]Scryfall[/url]'s
+ database. Perfect for limited formats like Draft, Sealed, or Cube!
+
+[h2]=== FEATURES ===[/h2]
+
+[list]
+[*] Automatically generates booster packs for [b]any set[/b] using real Scryfall data.
+[*] Supports special pack rules (e.g., Ravnica guild packs, Innistrad transform slots, Strixhaven archives, Zendikar Rising pathways, etc.).
+[*] Correct rarity distribution, including [i]mythics, rares, uncommons, commons[/i], and lands.
+[*] Handles special cases like Masterpieces, Expeditions, Timeshifted, and Showcase frames.
+[*] Double-faced cards (DFC) and split cards are generated correctly with front/back images.
+[*] Generates clean booster stacks with card names, oracle text, and high-quality images.
+[*] Works seamlessly in Draft, Sealed, or casual pack opening fun.
+[*] Easy to use: just update the object’s description with SET: XYZ (e.g., SET: M24) and start generating!
+[/list]
+
+[h2]=== HOW TO USE ===[/h2]
+
+[list]
+[*] Place the booster container on the table.
+[*] In the object description, add a line like: SET: MID (for Innistrad: Midnight Hunt).
+[*] Pull objects out of the container to generate boosters.
+[*] Open them, draft them, or just enjoy the pack-cracking experience!
+[/list]
+
+[h2]=== CREDITS AND THANKS ===[/h2]
+
+This mod uses the [url=https://scryfall.com/]Scryfall API[/url] for real-time card data and images.
+
+[b]Built with passion, assets and inspiration came from the following mods:[/b]
+
+[list]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2661350504]Mystery Booster: Convention Edition 2021 Pack Creator by Malixx[/url]
+[/list]
+
+Huge thanks to the creators of existing MTG mods in the TTS community who inspired this work!
+
+[h2]=== RESOURCES ===[/h2]
+
+[list]
+[*] [url=https://github.com/cornernote/tabletop_simulator-mtg_booster_generator] Assets and a copy of the savegame on GitHub[/url]
+[/list]

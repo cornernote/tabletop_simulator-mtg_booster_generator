@@ -9,8 +9,82 @@ local boosterCount = 0
 local boosterDataCache = {}
 local cardStackDescription = ""
 local lastDescription = ""
-local pollInterval = 0.15  -- seconds, limit scryfall API requests to <10/sec
+local pollInterval = 0.11  -- seconds, limit scryfall API requests to <10/sec
 local timePassed = 0
+
+--- Set Images ---
+local defaultImage = {
+    pack = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/",
+    box = "https://steamusercontent-a.akamaihd.net/ugc/12337440257369525692/FFAB46AA1DDF402F405DFF555D4124F785EBC27A/"
+}
+
+local setImages = {
+    Mystery = {
+         pack = "https://steamusercontent-a.akamaihd.net/ugc/1871804141033719694/FE0CC0C11B5ADB27831BAAF0FF37E95852B6F454/",
+        --box = "https://steamusercontent-a.akamaihd.net/ugc/1869552972532565911/FA78A97BBAB75CF44A7ED444920317C9CE41EABF/", -- wrong model
+        name = "Mystery",
+    },
+    FIN = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/16627771293824374075/C5699273F56C725E5F909A4CF68E0BBB40CB3212/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/12758583996214265176/92BF2AA71307A15E627B82EF92FD4081DE9F8BEF/",
+        name = "Final Fantasy",
+    },
+    INR = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33314777894966905/8D9807FCC410A72E23B650DD45417ADE665B4E87/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33314777894958369/39DEB8D4462F1BC1D52636F874AF87D4E0FA4F36/",
+        name = "Innistrad Remaster",
+    },
+    DFT = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33315411545885589/0C728D0BDFAB373310773FA4546CC4E08B1B11A1/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33315411545850871/98EB110FF97B6A90033B81633E0293397406819A/",
+        name = "Aetherdrift",
+    },
+    EOE = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/15223391781034002798/18D4F50FA52D5739A7AAF47270CD89A8F3161F20/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/12580228339626521582/AB004BC5138BE7C58B634A8183FE6972C0770796/",
+        name = "Edge of Eternities",
+    },
+    TDM = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33320655968555543/9ADDB19799EBAE44174466FE19E0C52F73EDDAE4/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33320655968415112/A7D3C7023F76DD7D187C1DA65A3D30007C85C5A6/",
+        name = "",
+    },
+    FDN = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666062860/0DFCD530284A8A4EC67CCEA18399BDE9405F3C3C/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666179694/00D1056E0709307541AD18383A3C4C02FD0E1DF9/",
+        name = "Foundations",
+    },
+    DSK = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666215369/BFD6BBAC0DE7F1F5C810F4FFCA8EF5E50EC8A03E/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666213749/327EF64F9F6599C7338FBEFD6E30F67F94687F9A/",
+        name = "Duskmourn: House of Horror",
+    },
+    BLB = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666242938/FA118E357C5820C6BF4EC70CAECC88876B22DE41/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666280402/EFA53DA40538B9B516FC204E7C03B3BDC8350C38/",
+        name = "Bloomburrow",
+    },
+    MH3 = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666331598/112B58990D8AD19B704448588F6CC34A8BF0E2E9/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666329942/59090620BF6D0D9EEC8609C9AEEE34F744E6158B/",
+        name = "Modern Horizons III",
+    },
+    MKM = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666403145/D578E8D070D0F89BB866212A8C5FD97AE840F418/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666405067/2B88816E482872EFD864CF2809FC777C690E6055/",
+        name = "Murders at Karlov Manor",
+    },
+    OTJ = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666361741/B40E45A8AE490D38D02C8D32295E71920362D781/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666378756/1E2CFB189744E3C571E628562ACCB25E2A613E45/",
+        name = "Outlaws of Thunder Junction",
+    },
+    RVR = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666416970/8B9F38A1D618C5C025C45E8D484B097CA8F245EE/",
+        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666433696/DA887125A73154443749A719F198C05C16ACAEA1/",
+        name = "Ravnica Remastered"
+    },
+}
 
 --- Function Hooks ---
 function onObjectLeaveContainer(container, leave_object)
@@ -27,7 +101,28 @@ function onObjectLeaveContainer(container, leave_object)
     local queryTable = getScryfallQueryTable()
     fetchDeckData(queryTable, currentBoosterID)
 
-    leave_object.createButton(makeBoosterLabelParams("generating " .. setCode))
+    leave_object.createButton({
+        label = "generating " .. setCode,
+        click_function = 'null',
+        function_owner = self,
+        position = { 0, 0.2, -1.6 },
+        rotation = { 0, 0, 0 },
+        width = 1000,
+        height = 200,
+        font_size = 130,
+        color = { 0, 0, 0, 95 },
+        font_color = { 1, 1, 1, 95 },
+    })
+
+    local diffuseImage = defaultImage.pack
+
+    if setImages[setCode] and setImages[setCode].pack then
+        diffuseImage = setImages[setCode].pack
+    end
+
+    leave_object.setCustomObject({
+        diffuse = diffuseImage
+    })
 
     Wait.condition(
             function()
@@ -37,8 +132,20 @@ function onObjectLeaveContainer(container, leave_object)
                             objectData.ContainedObjects = boosterDataCache[currentBoosterID]
                             leave_object.destruct()
                             local generatedBooster = spawnObjectData({ data = objectData })
-
-                            generatedBooster.createButton(makeBoosterLabelParams(setCode .. " Booster"))
+                            if not setImages[setCode] or not setImages[setCode].pack then
+                                generatedBooster.createButton({
+                                    label = setCode .. " Booster",
+                                    click_function = 'null',
+                                    function_owner = self,
+                                    position = { 0, 0.2, -1.6 },
+                                    rotation = { 0, 0, 0 },
+                                    width = 1000,
+                                    height = 200,
+                                    font_size = 150,
+                                    color = { 0, 0, 0, 95 },
+                                    font_color = { 1, 1, 1, 95 },
+                                })
+                            end
                         end,
                         function()
                             return leave_object.resting
@@ -51,41 +158,63 @@ function onObjectLeaveContainer(container, leave_object)
     )
 end
 
-function onLoad()
+function drawBox()
+    self.clearButtons()
+
     local setCode = getSetCode()
+    local diffuseImage = defaultImage.box
 
-    self.createButton({
-        click_function = "null",
-        function_owner = self,
-        label = setCode .. " Boosters",
-        position = { 0.025, -0.22, 0.355 },
-        rotation = { 270, 0, 0 },
-        color = { 0.1, 0.1, 0.1, 1 },
-        font_color = { 0.8, 0.8, 0.8, 0.8 },
-        scale = { 0.25, 0.25, 0.7 },
-        width = 0,
-        height = 0,
-        font_size = 220,
-    })
-
-    self.createButton({
-        click_function = "null",
-        function_owner = self,
-        label = setCode,
-        position = { 0.025, 0.5, -0.5 },
-        rotation = { 270, 0, 0 },
-        color = { 0.1, 0.1, 0.1, 1 },
-        font_color = { 0.8, 0.8, 0.8, 0.8 },
-        scale = { 0.25, 0.25, 0.7 },
-        width = 0,
-        height = 0,
-        font_size = 500,
-    })
-
-    if #setCode > 3 then
-        self.editButton({ index = 0, font_size = 160 })
-        self.editButton({ index = 1, font_size = 250 })
+    if setImages[setCode] and setImages[setCode].box then
+        diffuseImage = setImages[setCode].box
     end
+
+    if self.getCustomObject().diffuse ~= diffuseImage then
+        self.setCustomObject({
+            diffuse = diffuseImage
+        })
+        self.reload()
+        print("reloading box for " .. setCode)
+    end
+
+    if not setImages[setCode] or not setImages[setCode].box then
+        self.createButton({
+            click_function = "null",
+            function_owner = self,
+            label = setCode .. " Boosters",
+            position = { -0.71, -0.07, 0.15 },
+            rotation = { 0, 90, 270 },
+            color = { 0.1, 0.1, 0.1, 1 },
+            font_color = { 0.8, 0.8, 0.8, 0.8 },
+            scale = { 0.7, 0.7, 0.7 },
+            width = 0,
+            height = 0,
+            font_size = 220,
+        })
+
+        self.createButton({
+            click_function = "null",
+            function_owner = self,
+            label = setCode,
+            position = { 0, 0.33, 0.2 },
+            rotation = { 0, 90, 0 },
+            color = { 0.1, 0.1, 0.1, 1 },
+            font_color = { 0.8, 0.8, 0.8, 0.8 },
+            scale = { 0.7, 0.7, 0.7 },
+            width = 0,
+            height = 0,
+            font_size = 500,
+        })
+
+        if #setCode > 3 then
+            self.editButton({ index = 0, font_size = 160 })
+            self.editButton({ index = 1, font_size = 250 })
+        end
+    end
+end
+
+function onLoad()
+    drawBox()
+    lastDescription = self.getDescription()
 end
 
 function onUpdate()
@@ -101,39 +230,13 @@ function checkDescription()
     local description = self.getDescription()
 
     if description ~= lastDescription then
-        local setCode = getSetCode()
         lastDescription = description
-        self.editButton({ index = 0, label = setCode .. " Boosters" })
-        self.editButton({ index = 1, label = setCode })
-
-        if #setCode > 3 then
-            self.editButton({ index = 0, font_size = 160 })
-            self.editButton({ index = 1, font_size = 250 })
-        else
-            self.editButton({ index = 0, font_size = 220 })
-            self.editButton({ index = 1, font_size = 500 })
-        end
+        drawBox()
     end
 end
 
---- Booster Generation Logic ---
-function makeBoosterLabelParams(label)
-    return {
-        label = label,
-        click_function = 'null',
-        function_owner = self,
-        position = { 0, 0.2, -1.7 },
-        rotation = { 0, 0, 0 },
-        width = 0,
-        height = 0,
-        font_size = 100,
-        color = { 0, 0, 0, 0 },
-        font_color = { 0, 0, 0, 95 },
-    }
-end
-
 function getSetCode()
-    local setCode = "mystery"
+    local setCode = "M24"
 
     -- Trim leading/trailing whitespace from the captured text
     -- This makes sure " SET: M15 " becomes "M15"

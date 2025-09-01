@@ -18,6 +18,13 @@ With a single container and a set code, you can instantly generate boosters from
 [*] Easy to use: just update the object’s description with SET: XYZ (e.g., SET: M24) and start generating!
 [/list]
 
+[h2]=== SUPPORTED MODELS ===[/h2]
+
+[list]
+[*] [b]supported packs:[/b] MYSTERY, FIN, INR, DFT, EOE, TDM, FDN, DSK, BLB, MH3, MKM, OTJ, RVR, XML, KHM, MID, STX, AFR, UST, UGL, UNH, VOW, UMA, CMM, MMA, 2XM, SOK, NEO, BOK, CHK, SPM
+[*] [b]supported boxes:[/b] FIN, INR, DFT, EOE, TDM, FDN, DSK, BLB, MH3, MKM, OTJ, RVR, UMA, CMM, MMA, 2XM, SOK, NEO, BOK
+[/list]
+
 [h2]=== HOW TO USE ===[/h2]
 
 [list]
@@ -35,6 +42,19 @@ This mod uses the [url=https://scryfall.com/]Scryfall API[/url] for real-time ca
 
 [list]
 [*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2661350504]Mystery Booster: Convention Edition 2021 Pack Creator by Malixx[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3401546551]MTG 2024 All Sets and Commander Precons by Lord_Chrisicus[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3412420737]MTG 2025 All Sets and Commander Precons by Lord_Chrisicus[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=1152105520]Mtg Ixalan Booster Pack Model by Tigrezno[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2630198785]Kaldheim MTG Boosters by .BAD. Épísôdè -(OG)[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2631757831]Innistrad Midnight Hunt MTG Boosters by .BAD. Épísôdè -(OG)[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2627675676]MTG StrixHaven Boosters by .BAD. Épísôdè -(OG)[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2629204356]MTG Adventures in forgotten realms Boosters by .BAD. Épísôdè -(OG)[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3044355322]MTG Booster Boxes, Commander Masters, Ultimate Masters & Modern Masters by .BAD. Épísôdè -(OG)[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3034796320]MTG Double Masters 72 cnt. Booster Box by .BAD. Épísôdè -(OG)[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3044444843]MTG Kamigawa Block Booster Boxes by .BAD. Épísôdè -(OG)[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2670765095]Unstable Booster Pack Creator by Malixx[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2670769757]Unglued Booster Pack Creator by Malixx[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2670767248]Unhinged Booster Pack Creator by Malixx[/url]
 [/list]
 
 Huge thanks to the creators of existing MTG mods in the TTS community who inspired this work!

@@ -1,92 +1,227 @@
---- Global Configuration ---
+-- Any MTG Booster Generator by CoRNeRNoTe
+-- Generate any (well, many) boosters.
+
+-- Most recent script can be found on GitHub:
+-- https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua
+
 local config = {
     backURL = 'https://steamusercontent-a.akamaihd.net/ugc/1647720103762682461/35EF6E87970E2A5D6581E7D96A99F8A575B7A15F/',
     apiBaseURL = 'http://api.scryfall.com/cards/random?q='
 }
 
---- Script State ---
+local packLua = [[
+-- Any MTG Booster Generator by CoRNeRNoTe
+-- Most recent script can be found on GitHub:
+-- https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua
+function tryObjectEnter()
+    return false
+end
+function onObjectLeaveContainer(container)
+    if container ~= self then
+        return
+    end
+    Wait.time(function()
+        Wait.condition(
+                function()
+                    if container ~= nil then
+                        container.destruct()
+                    end
+                end,
+                function()
+                    return container ~= nil and container.getQuantity() == 0
+                end
+        )
+    end, 1)
+end
+]]
+
+local packLabelLua = [[
+function onLoad()
+    self.createButton({
+        label = self.getName() or "",
+        click_function = 'null',
+        function_owner = self,
+        position = { 0, 0.2, -1.6 },
+        rotation = { 0, 0, 0 },
+        width = 1000,
+        height = 200,
+        font_size = 150,
+        color = { 0, 0, 0, 95 },
+        font_color = { 1, 1, 1, 95 },
+    })
+end
+]]
+
 local boosterCount = 0
 local boosterDataCache = {}
 local cardStackDescription = ""
 local lastDescription = ""
 local pollInterval = 0.11  -- seconds, limit scryfall API requests to <10/sec
 local timePassed = 0
+local requestQueue = {}
 
---- Set Images ---
 local defaultImage = {
     pack = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/",
     box = "https://steamusercontent-a.akamaihd.net/ugc/12337440257369525692/FFAB46AA1DDF402F405DFF555D4124F785EBC27A/"
 }
 
 local setImages = {
-    Mystery = {
-         pack = "https://steamusercontent-a.akamaihd.net/ugc/1871804141033719694/FE0CC0C11B5ADB27831BAAF0FF37E95852B6F454/",
+    mystery = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/1871804141033719694/FE0CC0C11B5ADB27831BAAF0FF37E95852B6F454/",
         --box = "https://steamusercontent-a.akamaihd.net/ugc/1869552972532565911/FA78A97BBAB75CF44A7ED444920317C9CE41EABF/", -- wrong model
         name = "Mystery",
     },
-    FIN = {
+    fin = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/16627771293824374075/C5699273F56C725E5F909A4CF68E0BBB40CB3212/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/12758583996214265176/92BF2AA71307A15E627B82EF92FD4081DE9F8BEF/",
         name = "Final Fantasy",
     },
-    INR = {
+    inr = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33314777894966905/8D9807FCC410A72E23B650DD45417ADE665B4E87/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33314777894958369/39DEB8D4462F1BC1D52636F874AF87D4E0FA4F36/",
         name = "Innistrad Remaster",
     },
-    DFT = {
+    dft = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33315411545885589/0C728D0BDFAB373310773FA4546CC4E08B1B11A1/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33315411545850871/98EB110FF97B6A90033B81633E0293397406819A/",
         name = "Aetherdrift",
     },
-    EOE = {
+    eoe = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/15223391781034002798/18D4F50FA52D5739A7AAF47270CD89A8F3161F20/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/12580228339626521582/AB004BC5138BE7C58B634A8183FE6972C0770796/",
         name = "Edge of Eternities",
     },
-    TDM = {
+    tdm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33320655968555543/9ADDB19799EBAE44174466FE19E0C52F73EDDAE4/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33320655968415112/A7D3C7023F76DD7D187C1DA65A3D30007C85C5A6/",
         name = "",
     },
-    FDN = {
+    fdn = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666062860/0DFCD530284A8A4EC67CCEA18399BDE9405F3C3C/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666179694/00D1056E0709307541AD18383A3C4C02FD0E1DF9/",
         name = "Foundations",
     },
-    DSK = {
+    dsk = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666215369/BFD6BBAC0DE7F1F5C810F4FFCA8EF5E50EC8A03E/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666213749/327EF64F9F6599C7338FBEFD6E30F67F94687F9A/",
         name = "Duskmourn: House of Horror",
     },
-    BLB = {
+    blb = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666242938/FA118E357C5820C6BF4EC70CAECC88876B22DE41/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666280402/EFA53DA40538B9B516FC204E7C03B3BDC8350C38/",
         name = "Bloomburrow",
     },
-    MH3 = {
+    mh3 = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666331598/112B58990D8AD19B704448588F6CC34A8BF0E2E9/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666329942/59090620BF6D0D9EEC8609C9AEEE34F744E6158B/",
         name = "Modern Horizons III",
     },
-    MKM = {
+    mkm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666403145/D578E8D070D0F89BB866212A8C5FD97AE840F418/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666405067/2B88816E482872EFD864CF2809FC777C690E6055/",
         name = "Murders at Karlov Manor",
     },
-    OTJ = {
+    otj = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666361741/B40E45A8AE490D38D02C8D32295E71920362D781/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666378756/1E2CFB189744E3C571E628562ACCB25E2A613E45/",
         name = "Outlaws of Thunder Junction",
     },
-    RVR = {
+    rvr = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666416970/8B9F38A1D618C5C025C45E8D484B097CA8F245EE/",
         box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666433696/DA887125A73154443749A719F198C05C16ACAEA1/",
         name = "Ravnica Remastered"
     },
+    xml = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/861734852198387392/B81155A30E28760116D166987C221F946D37380E/",
+        name = "Ixalan",
+    },
+    khm = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/1734441450301159293/A7F7C010D0312D856CD8667678F5732BDB8F6EB2/",
+        name = "Kaldheim",
+    },
+    mid = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/1734441450308868762/12F6CE09A39E5FEC3B472EBE54562B92A7332027/",
+        name = "Innistrad: Midnight Hunt",
+    },
+    stx = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/1734441184603578733/2009A7D782D40F1456733EFE30ACC064D12B5FFD/",
+        name = "StrixHaven",
+    },
+    afr = {
+        pack = "Adventures in the Forgotten Realms",
+        name = "https://steamusercontent-a.akamaihd.net/ugc/1734441262522564318/D44434D1C56BA4A590591606A3A50EE4C9F607B8/",
+    },
+    ust = {
+        pack = {
+            "https://steamusercontent-a.akamaihd.net/ugc/1869553886384090159/B009BD275EAA4E4D327CABF6E9C287FCF974CAE0/",
+            "https://steamusercontent-a.akamaihd.net/ugc/1869553886384088312/840D789FDE909D82F2943ADC26138DD838C6D3CD/",
+            "https://steamusercontent-a.akamaihd.net/ugc/1869553610271665770/97276A7B7774EF057E915B9A0AB9AC3F81221ED2/",
+        },
+        name = "Unstable",
+    },
+    ugl = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/1869553610271718076/9F874EFF82054749352677189F63683DC038A17E/",
+        name = "Unglued",
+    },
+    unh = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/1869553610271611558/564F7D6B23A479883C84C4F5D90852CD4C056E9A/",
+        name = "Unhinged",
+    },
+    vow = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/2027238089146067515/FB7A98B9B0BE5C25098F63981C6C12BBE1036BA6/",
+        name = "Inistrad Crimson VOW",
+    },
+    uma = {
+        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031710788/D480DA25A894F28774F9CFE05BAF98338A647B38/",
+        pack = "https://i.imgur.com/4RylXgU.png",
+        name = "Ultimate Masters",
+    },
+    cmm = {
+        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031758324/9454C7F259FF420BF408C79C67D2135CB7208342/",
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031059945/BF91A05DA4A788ED5F5C01B05305F3E4ECE8CE52/",
+        name = "Commander Masters",
+    },
+    mma = {
+        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031581496/8F6B8B0676DA8ECD9E6077F1A396DD7697C383FB/",
+        pack = "https://i.imgur.com/CU7EL6h.png",
+        name = "Modern Masters",
+    },
+    twoxm = {
+        box = "https://steamusercontent-a.akamaihd.net/ugc/2027238089151520026/5E0945FCDF5A168C9F21D93E5D63677C8447B967/",
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/2027238089151521799/52EC298FBB89EA2A24DA024981161F96E3522645/",
+        name = "Double Masters",
+        code = "2XM"
+    },
+    sok = {
+        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098032381929/1C04D7E1CFD05BA6D03747877A1450B490EBD6BB/",
+        pack = "https://i.imgur.com/ctFTHkw.jpg",
+        name = "Saviors of Kamigawa",
+    },
+    neo = {
+        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098032099644/CA4A90672BD93147D4E17B42956A1B166C009628/",
+        pack = "https://i.imgur.com/5FcGpqC.png",
+        name = "Kamigawa: Neon Dynasty",
+    },
+    bok = {
+        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098032413138/3FF67A090FBD356E16AE2C041EE52C9D4D1B325B/",
+        pack = "https://i.imgur.com/t6UP7lt.jpg",
+        name = "Betrayers of Kamigawa",
+    },
+    chk = {
+        pack = "https://i.imgur.com/E7IW8Tv.jpg",
+        name = "Champions of Kamigawa",
+    },
+    spm = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/11967831829609287872/6D168435BEFB1C1EE50A4F0B286BF4D8D9FEA7C8/",
+        name = "Marvel's Spider-Man",
+    },
 }
 
---- Function Hooks ---
+local setCodeMapping = {
+    ['2xm'] = 'twoxm',
+    ['???'] = 'empty',
+}
+
 function onObjectLeaveContainer(container, leave_object)
     if container ~= self then
         return
@@ -114,10 +249,18 @@ function onObjectLeaveContainer(container, leave_object)
         font_color = { 1, 1, 1, 95 },
     })
 
+    local mappedSetCode = setCodeMapping[string.lower(setCode)] or string.lower(setCode)
     local diffuseImage = defaultImage.pack
+    local packImage = setImages[mappedSetCode] and setImages[mappedSetCode].pack
 
-    if setImages[setCode] and setImages[setCode].pack then
-        diffuseImage = setImages[setCode].pack
+    if packImage then
+        if type(packImage) == "string" then
+            diffuseImage = packImage
+        elseif type(packImage) == "table" then
+            diffuseImage = packImage[math.random(1, #packImage)]
+        else
+            packImage = null
+        end
     end
 
     leave_object.setCustomObject({
@@ -132,20 +275,11 @@ function onObjectLeaveContainer(container, leave_object)
                             objectData.ContainedObjects = boosterDataCache[currentBoosterID]
                             leave_object.destruct()
                             local generatedBooster = spawnObjectData({ data = objectData })
-                            if not setImages[setCode] or not setImages[setCode].pack then
-                                generatedBooster.createButton({
-                                    label = setCode .. " Booster",
-                                    click_function = 'null',
-                                    function_owner = self,
-                                    position = { 0, 0.2, -1.6 },
-                                    rotation = { 0, 0, 0 },
-                                    width = 1000,
-                                    height = 200,
-                                    font_size = 150,
-                                    color = { 0, 0, 0, 95 },
-                                    font_color = { 1, 1, 1, 95 },
-                                })
+                            local packLuaScript = packLua
+                            if not packImage then
+                                packLuaScript = packLuaScript .. packLabelLua
                             end
+                            generatedBooster.setLuaScript(packLuaScript)
                         end,
                         function()
                             return leave_object.resting
@@ -162,10 +296,11 @@ function drawBox()
     self.clearButtons()
 
     local setCode = getSetCode()
+    local mappedSetCode = setCodeMapping[string.lower(setCode)] or string.lower(setCode)
     local diffuseImage = defaultImage.box
 
-    if setImages[setCode] and setImages[setCode].box then
-        diffuseImage = setImages[setCode].box
+    if setImages[mappedSetCode] and setImages[mappedSetCode].box then
+        diffuseImage = setImages[mappedSetCode].box
     end
 
     if self.getCustomObject().diffuse ~= diffuseImage then
@@ -173,10 +308,9 @@ function drawBox()
             diffuse = diffuseImage
         })
         self.reload()
-        print("reloading box for " .. setCode)
     end
 
-    if not setImages[setCode] or not setImages[setCode].box then
+    if not setImages[mappedSetCode] or not setImages[mappedSetCode].box then
         self.createButton({
             click_function = "null",
             function_owner = self,
@@ -236,14 +370,9 @@ function checkDescription()
 end
 
 function getSetCode()
-    local setCode = "M24"
-
     -- Trim leading/trailing whitespace from the captured text
     -- This makes sure " SET: M15 " becomes "M15"
-    local captured_text = self.getDescription():match("SET:%s*([^\n]+)")
-    if captured_text then
-        setCode = captured_text:match("^%s*(.-)%s*$")
-    end
+    local setCode = self.getDescription():match("^SET:%s*(%S+)") or "???"
 
     if #setCode > 3 then
         setCode = string.lower(setCode):gsub("^%l", string.upper)
@@ -383,6 +512,10 @@ for _, s in ipairs({ 'ice', 'all', 'csp', 'mh1', 'khm' }) do
     end
 end
 
+BoosterPacks.empty = function()
+    return {}
+end
+
 BoosterPacks.mystery = function()
     local urlTable = {}
     local urlPrefix = config.apiBaseURL .. 'set:mb1+'
@@ -510,22 +643,10 @@ BoosterPacks.ravnica = createCustomBooster('(s:rav+or+s:gpt+or+s:dis+or+s:rtr+or
     return pack
 end)
 
--- Maps set codes that are not valid Lua identifiers to valid function names.
-local setCodeMapping = {
-    ['2xm'] = 'twoxm'
-}
-
---- Rate Limiting State ---
-local requestQueue = {}
-local requestsThisMinute = 0
-local resetTime = os.time()
-
--- enqueue requests instead of calling WebRequest.get directly
 function enqueueRequest(url, callback)
     table.insert(requestQueue, { url = url, callback = callback })
 end
 
--- process up to 5 requests per minute
 function processRequestQueue()
     if #requestQueue == 0 then
         return
@@ -534,7 +655,6 @@ function processRequestQueue()
     WebRequest.get(req.url, req.callback)
 end
 
---- Scryfall API and Deck Handling ---
 function getScryfallQueryTable()
     local setCode = string.lower(getSetCode())
     local mappedSetCode = setCodeMapping[setCode] or setCode
@@ -543,10 +663,11 @@ function getScryfallQueryTable()
 end
 
 function fetchDeckData(urlTable, boosterID)
+    local setCode = getSetCode();
     local deck = {
         Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 180, rotZ = 180, scaleX = 1, scaleY = 1, scaleZ = 1 },
         Name = "Deck",
-        Nickname = getSetCode() .. " Booster",
+        Nickname = setCode .. " Booster",
         Description = cardStackDescription,
         DeckIDs = {},
         CustomDeck = {},
@@ -577,10 +698,6 @@ function fetchDeckData(urlTable, boosterID)
 
     Wait.condition(
             function()
-                --if #deck.ContainedObjects ~= #urlTable then
-                --    return
-                --end
-
                 local cardNames = {}
                 local hasDuplicates = false
                 for _, card in ipairs(deck.ContainedObjects) do
@@ -594,18 +711,32 @@ function fetchDeckData(urlTable, boosterID)
                 if hasDuplicates then
                     fetchDeckData(urlTable, boosterID)
                 else
-                    local boosterContents = { deck }
+                    local boosterContents = { }
+                    if setCode == "???" then
+                        local instructionNotecard = {
+                            Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
+                            Name = "Notecard",
+                            Nickname = "SUPPORTED SETS",
+                            Description = getSupportedSets(),
+                            Grid = false,
+                            Snap = false,
+                        }
+                        table.insert(boosterContents, instructionNotecard)
+                    else
+                        table.insert(boosterContents, deck)
+                    end
+
                     if #requestErrors > 0 then
                         for _, error in ipairs(requestErrors) do
-                            local notecard = {
+                            local errorNotecard = {
                                 Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
                                 Name = "Notecard",
-                                Nickname = "Booster Generation Errors",
+                                Nickname = "Booster Generation Error",
                                 Description = "url: " .. error.url .. "\n\n" .. error.message,
                                 Grid = false,
                                 Snap = false,
                             }
-                            table.insert(boosterContents, notecard)
+                            table.insert(boosterContents, errorNotecard)
                         end
 
                         requestErrors = {}
@@ -713,3 +844,20 @@ function createCardDataFromJSON(jsonString, cardIndex)
     return cardData
 end
 
+function getSupportedSets()
+    local packs = {}
+    local boxes = {}
+
+    for code, data in pairs(setImages) do
+        if data.pack then
+            table.insert(packs, data.code or string.upper(code))
+        end
+        if data.box then
+            table.insert(boxes, data.code or string.upper(code))
+        end
+    end
+
+    return ("supported packs: " .. table.concat(packs, ", ")
+            .. "\n\n"
+            .. "supported boxes: " .. table.concat(boxes, ", "))
+end

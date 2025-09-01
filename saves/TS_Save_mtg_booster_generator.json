@@ -1,7 +1,7 @@
 {
   "SaveName": "Custom",
-  "EpochTime": 1756734116,
-  "Date": "9/1/2025 11:11:56 PM",
+  "EpochTime": 1756734967,
+  "Date": "9/1/2025 11:26:07 PM",
   "VersionNumber": "v13.3",
   "GameMode": "DND Measurement Injector",
   "GameType": "Utility",
@@ -605,75 +605,21 @@
       "XmlUI": ""
     },
     {
-      "GUID": "9401e4",
-      "Name": "3DText",
-      "Transform": {
-        "posX": 0.169359416,
-        "posY": 0.961132467,
-        "posZ": -9.494253,
-        "rotX": 90.0,
-        "rotY": 359.8334,
-        "rotZ": 0.0,
-        "scaleX": 1.0,
-        "scaleY": 1.0,
-        "scaleZ": 1.0
-      },
-      "Nickname": "",
-      "Description": "",
-      "GMNotes": "",
-      "AltLookAngle": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
-      },
-      "ColorDiffuse": {
-        "r": 1.0,
-        "g": 1.0,
-        "b": 1.0
-      },
-      "LayoutGroupSortIndex": 0,
-      "Value": 0,
-      "Locked": true,
-      "Grid": true,
-      "Snap": true,
-      "IgnoreFoW": false,
-      "MeasureMovement": false,
-      "DragSelectable": true,
-      "Autoraise": true,
-      "Sticky": true,
-      "Tooltip": true,
-      "GridProjection": false,
-      "HideWhenFaceDown": false,
-      "Hands": false,
-      "Text": {
-        "Text": "== ANY MTG Booster Box ==\n\nSimply write \"SET: XYZ\" in the description.\n\nThe box will change to be an XYZ Booster Box!\n\nSome sets support box and pack images.",
-        "colorstate": {
-          "r": 1.0,
-          "g": 1.0,
-          "b": 1.0
-        },
-        "fontSize": 64
-      },
-      "LuaScript": "",
-      "LuaScriptState": "",
-      "XmlUI": ""
-    },
-    {
       "GUID": "059a49",
       "Name": "Custom_Model_Infinite_Bag",
       "Transform": {
-        "posX": -0.7750002,
-        "posY": 2.183039,
-        "posZ": 5.42499876,
-        "rotX": -3.02041556E-08,
-        "rotY": 89.9854,
-        "rotZ": -1.99573932E-07,
+        "posX": -0.7750006,
+        "posY": 2.18304,
+        "posZ": 5.42499733,
+        "rotX": -7.14496537E-07,
+        "rotY": 89.985405,
+        "rotZ": -5.919817E-07,
         "scaleX": 3.09999824,
         "scaleY": 3.09999824,
         "scaleZ": 3.09999824
       },
-      "Nickname": "[FFDA00]ANY[ffffff] MTG Booster Box",
-      "Description": "SET: ???",
+      "Nickname": "[FFDA00]ANY[cccccc] MTG Booster Box[ffffff]",
+      "Description": "SET: ???\n\nhttps://steamcommunity.com/sharedfiles/filedetails/?id=3558729769",
       "GMNotes": "",
       "AltLookAngle": {
         "x": 0.0,
@@ -771,7 +717,7 @@
           "Number": 0,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/9779110528988615269/E9A65CD25256BFDB28AE4140FCB1D27BC71A5A8D/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11967831829609287872/6D168435BEFB1C1EE50A4F0B286BF4D8D9FEA7C8/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -799,15 +745,15 @@
       ]
     },
     {
-      "GUID": "9357ce",
+      "GUID": "8c8ef0",
       "Name": "Notecard",
       "Transform": {
-        "posX": 0.103324912,
+        "posX": -0.379766,
         "posY": 1.03,
-        "posZ": -1.81946814,
-        "rotX": 6.444387E-07,
-        "rotY": 1.14296813E-06,
-        "rotZ": -6.06891945E-07,
+        "posZ": -11.6653175,
+        "rotX": -2.68948841E-09,
+        "rotY": -1.2752937E-06,
+        "rotZ": 5.41035838E-08,
         "scaleX": 1.0,
         "scaleY": 1.0,
         "scaleZ": 1.0
@@ -839,6 +785,60 @@
       "GridProjection": false,
       "HideWhenFaceDown": false,
       "Hands": false,
+      "LuaScript": "",
+      "LuaScriptState": "",
+      "XmlUI": ""
+    },
+    {
+      "GUID": "8d9831",
+      "Name": "3DText",
+      "Transform": {
+        "posX": -0.6947406,
+        "posY": 0.961134434,
+        "posZ": 0.630865753,
+        "rotX": 90.0,
+        "rotY": 4.82967243E-06,
+        "rotZ": 0.0,
+        "scaleX": 1.0,
+        "scaleY": 1.0,
+        "scaleZ": 1.0
+      },
+      "Nickname": "",
+      "Description": "",
+      "GMNotes": "",
+      "AltLookAngle": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "ColorDiffuse": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0
+      },
+      "LayoutGroupSortIndex": 0,
+      "Value": 0,
+      "Locked": true,
+      "Grid": true,
+      "Snap": true,
+      "IgnoreFoW": false,
+      "MeasureMovement": false,
+      "DragSelectable": true,
+      "Autoraise": true,
+      "Sticky": true,
+      "Tooltip": true,
+      "GridProjection": false,
+      "HideWhenFaceDown": false,
+      "Hands": false,
+      "Text": {
+        "Text": "== ANY MTG Booster Box ==\n\nSimply write \"SET: XYZ\" in the description.\n\nThe box will change to be an XYZ Booster Box!\n\nSome sets support box and pack images.",
+        "colorstate": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0
+        },
+        "fontSize": 64
+      },
       "LuaScript": "",
       "LuaScriptState": "",
       "XmlUI": ""

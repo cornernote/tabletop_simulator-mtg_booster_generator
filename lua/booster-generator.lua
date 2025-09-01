@@ -56,7 +56,7 @@ local boosterCount = 0
 local boosterDataCache = {}
 local cardStackDescription = ""
 local lastDescription = ""
-local pollInterval = 0.11  -- seconds, limit scryfall API requests to <10/sec
+local pollInterval = 0.15  -- seconds, limit scryfall API requests to <10/sec
 local timePassed = 0
 local requestQueue = {}
 
@@ -532,32 +532,21 @@ BoosterPacks.mystery = function()
 end
 
 BoosterPacks.spm = function()
-    local urlTable = {}
-    local urlPrefix = config.apiBaseURL .. 's:spm+'
-
-    for i = 1, math.random(6, 9) do
-        table.insert(urlTable, urlPrefix .. 'r:common')
+    local big = 1000000000000;
+    local pack = {}
+    local url = config.apiBaseURL .. 's:spm+'
+    -- table.insert(pack, url .. 't:land') -- it should have a land, but i added another common
+    table.insert(pack, url .. getRandomRarity(big, 1))
+    for i = 1, 7 do
+        table.insert(pack, url .. 'r:common+-t:basic')
     end
-    for i = 1, math.random(3, 5) do
-        table.insert(urlTable, urlPrefix .. 'r:uncommon')
+    for i = 1, 3 do
+        table.insert(pack, url .. 'r:uncommon')
     end
-    table.insert(urlTable, urlPrefix .. 't:land')
-
-    local numRares = 1
-    local rareRoll = math.random(1, 200)
-    if rareRoll == 1 then
-        numRares = 4
-    elseif rareRoll <= 7 then
-        numRares = 3
-    elseif rareRoll <= 70 then
-        numRares = 2
-    end
-    for i = 1, numRares do
-        table.insert(urlTable, urlPrefix .. getRandomRarity(8, 1))
-    end
-
-    table.insert(urlTable, urlPrefix .. getRandomRarity(nil, nil, 4))
-    return urlTable
+    table.insert(pack, url .. getRandomRarity(8, 3, 1))
+    table.insert(pack, url .. getRandomRarity(big, 30, 3))
+    table.insert(pack, url .. getRandomRarity(big, 300, big))
+    return pack
 end
 
 BoosterPacks.stx = function()

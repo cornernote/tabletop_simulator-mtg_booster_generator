@@ -407,27 +407,28 @@ local MasterpieceSets = {
 }
 
 function BoosterPacks.default(set)
-    local pack = {}
+    local urls = {}
     local url = apiSetPrefix .. set .. '+'
     url = url:gsub('%+s:%(', '+(')
 
+    table.insert(urls, url .. 't:basic')
     for c in ('wubrg'):gmatch('.') do
-        table.insert(pack, url .. 'r:common+c>=' .. c)
+        table.insert(urls, url .. 'r:common+c>=' .. c)
     end
-    for i = 1, 6 do
-        table.insert(pack, url .. 'r:common+-t:basic')
+    for i = 1, 5 do
+        table.insert(urls, url .. 'r:common+')
     end
     for i = 1, 3 do
-        table.insert(pack, url .. 'r:uncommon')
+        table.insert(urls, url .. 'r:uncommon')
     end
 
-    table.insert(pack, url .. getRandomRarity(8, 1))
+    table.insert(urls, url .. getRandomRarity(8, 1))
 
     if MasterpieceSets[set] and math.random(1, 144) == 1 then
-        pack[#pack] = config.apiBaseURL .. 's:' .. MasterpieceSets[set]
+        urls[#urls] = config.apiBaseURL .. 's:' .. MasterpieceSets[set]
     end
 
-    return pack
+    return urls
 end
 
 function BoosterPacks.dom(set)
@@ -442,23 +443,23 @@ end
 
 -- Changed function name to be a valid Lua identifier for clarity.
 function BoosterPacks.twoxm(set)
-    local pack = BoosterPacks.default(set)
-    pack[11] = pack[#pack]
+    local urls = BoosterPacks.default(set)
+    urls[11] = urls[#urls]
     for i = 9, 10 do
-        pack[i] = apiSetPrefix .. '2xm' .. '+' .. getRandomRarity()
+        urls[i] = apiSetPrefix .. '2xm' .. '+' .. getRandomRarity()
     end
-    return pack
+    return urls
 end
 
-local function createReplacementSlotPack(pack, set, removeQuery, addQuery)
-    for i, v in pairs(pack) do
+local function createReplacementSlotPack(urls, set, removeQuery, addQuery)
+    for i, v in pairs(urls) do
         if i ~= 6 then
-            pack[i] = v .. removeQuery
+            urls[i] = v .. removeQuery
         else
-            pack[i] = apiSetPrefix .. set .. '+' .. getRandomRarity() .. addQuery
+            urls[i] = apiSetPrefix .. set .. '+' .. getRandomRarity() .. addQuery
         end
     end
-    return pack
+    return urls
 end
 
 for _, s in ipairs({ 'isd', 'dka', 'soi', 'emn' }) do
@@ -469,16 +470,16 @@ end
 
 for _, s in ipairs({ 'mid' }) do
     BoosterPacks[s] = function(set)
-        local pack = BoosterPacks.default(set)
-        local transformIndex = math.random(#pack - 1, #pack)
-        for i, v in pairs(pack) do
+        local urls = BoosterPacks.default(set)
+        local transformIndex = math.random(#urls - 1, #urls)
+        for i, v in pairs(urls) do
             if i == 6 or i == transformIndex then
-                pack[i] = v .. '+is:transform'
+                urls[i] = v .. '+is:transform'
             else
-                pack[i] = v .. '+-is:transform'
+                urls[i] = v .. '+-is:transform'
             end
         end
-        return pack
+        return urls
     end
 end
 
@@ -490,15 +491,15 @@ end
 
 for _, s in ipairs({ 'rav', 'gpt', 'dis', 'rtr', 'gtc', 'dgm', 'grn', 'rna' }) do
     BoosterPacks[s] = function(set)
-        return createReplacementSlotPack(BoosterPacks.default(set), set, '+-t:land', '+t:land+-t:basic')
+        return createReplacementSlotPack(BoosterPacks.default(set), set, '+-t:land', '+t:land')
     end
 end
 
 for _, s in ipairs({ 'ice', 'all', 'csp', 'mh1', 'khm' }) do
     BoosterPacks[s] = function(set)
-        local pack = BoosterPacks.default(set)
-        pack[6] = apiSetPrefix .. set .. '+t:basic+t:snow'
-        return pack
+        local urls = BoosterPacks.default(set)
+        urls[6] = apiSetPrefix .. set .. '+t:basic+t:snow'
+        return urls
     end
 end
 
@@ -525,10 +526,10 @@ BoosterPacks.spm = function()
     local big = 1000000000000;
     local urls = {}
     local url = config.apiBaseURL .. 's:spm+'
-    -- table.insert(pack, url .. 't:land') -- it should have a land, but i added another common
+    table.insert(urls, url .. 't:basic')
     table.insert(urls, url .. getRandomRarity(big, 1))
-    for i = 1, 7 do
-        table.insert(urls, url .. 'r:common+-t:basic')
+    for i = 1, 6 do
+        table.insert(urls, url .. 'r:common')
     end
     for i = 1, 3 do
         table.insert(urls, url .. 'r:uncommon')
@@ -553,21 +554,21 @@ BoosterPacks.stx = function()
         table.insert(urls, url .. 'r:c+c:' .. c)
     end
     for i = 1, 3 do
-        table.insert(urls, url .. 'r:c+-t:basic')
+        table.insert(urls, url .. 'r:c')
     end
 
     if math.random(3) == 1 then
         table.insert(urls, url)
     else
-        table.insert(urls, url .. 'r:c+-t:basic')
+        table.insert(urls, url .. 'r:c')
     end
     return urls
 end
 
 local function createCustomBooster(setQuery, packStructure)
     return function()
-        local pack = BoosterPacks.default(setQuery)
-        return packStructure(pack)
+        local urls = BoosterPacks.default(setQuery)
+        return packStructure(urls)
     end
 end
 
@@ -607,7 +608,7 @@ BoosterPacks.innistrad = createCustomBooster('(s:isd+or+s:dka+or+s:avr+or+s:soi+
 end)
 
 BoosterPacks.ravnica = createCustomBooster('(s:rav+or+s:gpt+or+s:dis+or+s:rtr+or+s:gtc+or+s:dgm+or+s:grn+or+s:rna)', function(urls)
-    local landQuery = 't:land+-t:basic'
+    local landQuery = 't:land'
     table.insert(urls, urls[#urls])
     for i = 7, 9 do
         urls[i] = urls[6] .. '+id>=2'
@@ -637,7 +638,15 @@ end
 function getSetUrls(setCode)
     local mappedSetCode = setCodeMapping[setCode] or setCode
     local packGenerator = BoosterPacks[mappedSetCode] or BoosterPacks.default
-    return packGenerator(setCode)
+    return reverseTable(packGenerator(setCode))
+end
+
+function reverseTable(t)
+    local rev = {}
+    for i = #t, 1, -1 do
+        table.insert(rev, t[i])
+    end
+    return rev
 end
 
 function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, replaceIndices, originalUrls)
@@ -665,6 +674,7 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
         enqueueRequest(url, function(request)
             if request.response_code == 200 then
                 local cardData = createCardDataFromJSON(request.text, i)
+                print(url .. ": " .. cardData.Nickname)
                 if cardData then
                     deck.ContainedObjects[i] = cardData
                     deck.DeckIDs[i] = cardData.CardID

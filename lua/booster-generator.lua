@@ -527,13 +527,13 @@ BoosterPacks.spm = function()
     local urls = {}
     local url = config.apiBaseURL .. 's:spm+'
     table.insert(urls, url .. 't:basic')
-    table.insert(urls, url .. getRandomRarity(big, 1))
     for i = 1, 6 do
         table.insert(urls, url .. 'r:common')
     end
     for i = 1, 3 do
         table.insert(urls, url .. 'r:uncommon')
     end
+    table.insert(urls, url .. getRandomRarity(big, 1))
     table.insert(urls, url .. getRandomRarity(8, 3, 1))
     table.insert(urls, url .. getRandomRarity(big, 30, 3))
     table.insert(urls, url .. getRandomRarity(big, 300, big))
@@ -636,9 +636,10 @@ function processRequestQueue()
 end
 
 function getSetUrls(setCode)
-    local mappedSetCode = setCodeMapping[setCode] or setCode
+    local lowerSetCode =  string.lower(setCode)
+    local mappedSetCode = setCodeMapping[lowerSetCode] or lowerSetCode
     local packGenerator = BoosterPacks[mappedSetCode] or BoosterPacks.default
-    return reverseTable(packGenerator(setCode))
+    return reverseTable(packGenerator(lowerSetCode))
 end
 
 function reverseTable(t)

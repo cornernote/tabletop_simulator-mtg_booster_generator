@@ -441,9 +441,9 @@ function BoosterPacks.znr(set)
     return addCardTypeToPack(BoosterPacks.default(set), 't:land+(is:spell+or+pathway)')
 end
 
--- Changed function name to be a valid Lua identifier for clarity.
 function BoosterPacks.twoxm(set)
     local urls = BoosterPacks.default(set)
+    urls[1] = urls[7]
     urls[11] = urls[#urls]
     for i = 9, 10 do
         urls[i] = apiSetPrefix .. '2xm' .. '+' .. getRandomRarity()
@@ -489,16 +489,16 @@ for _, s in ipairs({ 'cns', 'cn2' }) do
     end
 end
 
-for _, s in ipairs({ 'rav', 'gpt', 'dis', 'rtr', 'gtc', 'dgm', 'grn', 'rna' }) do
-    BoosterPacks[s] = function(set)
-        return createReplacementSlotPack(BoosterPacks.default(set), set, '+-t:land', '+t:land')
-    end
-end
+--for _, s in ipairs({ 'rav', 'gpt', 'dis', 'rtr', 'gtc', 'dgm', 'grn', 'rna' }) do
+--    BoosterPacks[s] = function(set)
+--        return createReplacementSlotPack(BoosterPacks.default(set), set, '+-t:land', '+t:land')
+--    end
+--end
 
 for _, s in ipairs({ 'ice', 'all', 'csp', 'mh1', 'khm' }) do
     BoosterPacks[s] = function(set)
         local urls = BoosterPacks.default(set)
-        urls[6] = apiSetPrefix .. set .. '+t:basic+t:snow'
+        urls[7] = apiSetPrefix .. set .. '+t:basic+t:snow'
         return urls
     end
 end
@@ -788,7 +788,6 @@ function createCardDataFromJSON(jsonString, cardIndex)
 
     if card.card_faces then
         if card.image_uris then
-            -- Split cards like Adventure
             cardName = getFormattedName(card.card_faces[1])
             for i, face in ipairs(card.card_faces) do
                 cardOracle = cardOracle .. getFormattedName(face) .. '\n' .. getCardOracleText(face)
@@ -798,14 +797,12 @@ function createCardDataFromJSON(jsonString, cardIndex)
             end
             faceURL = card.image_uris.normal:gsub('%?.*', ''):gsub('normal', imageQuality) .. cacheBuster
         else
-            -- Transform / DFC
             local face = card.card_faces[1]
             local back = card.card_faces[2]
             cardName = getFormattedName(face, 'DFC')
             cardOracle = getCardOracleText(face)
             faceURL = face.image_uris.normal:gsub('%?.*', ''):gsub('normal', imageQuality) .. cacheBuster
             local backURL = back.image_uris.normal:gsub('%?.*', ''):gsub('normal', imageQuality) .. cacheBuster
-
             local backCardIndex = cardIndex + 100
             backData = {
                 Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
@@ -823,7 +820,6 @@ function createCardDataFromJSON(jsonString, cardIndex)
             }
         end
     else
-        -- Normal card
         cardName = getFormattedName(card)
         cardOracle = getCardOracleText(card)
         faceURL = card.image_uris.normal:gsub('%?.*', ''):gsub('normal', imageQuality) .. cacheBuster

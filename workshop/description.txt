@@ -18,11 +18,12 @@ With a single container and a set code, you can instantly generate boosters from
 [*] Easy to use: just update the object’s description with SET: XYZ (e.g., SET: M24) and start generating!
 [/list]
 
-[h2]=== SUPPORTED MODELS ===[/h2]
+[h2]=== SUPPORTED SETS ===[/h2]
+
+Almost all sets are supported.  The following have custom models:
 
 [list]
-[*] [b]supported packs:[/b] MYSTERY, FIN, INR, DFT, EOE, TDM, FDN, DSK, BLB, MH3, MKM, OTJ, RVR, XML, KHM, MID, STX, AFR, UST, UGL, UNH, VOW, UMA, CMM, MMA, 2XM, SOK, NEO, BOK, CHK, SPM
-[*] [b]supported boxes:[/b] FIN, INR, DFT, EOE, TDM, FDN, DSK, BLB, MH3, MKM, OTJ, RVR, UMA, CMM, MMA, 2XM, SOK, NEO, BOK
+[*] MYSTERY, FIN, INR, DFT, EOE, TDM, FDN, DSK, BLB, MH3, MKM, OTJ, RVR, XML, KHM, MID, STX, AFR, UST, UGL, UNH, VOW, UMA, CMM, MMA, 2XM, SOK, NEO, BOK, CHK, SPM
 [/list]
 
 [h2]=== HOW TO USE ===[/h2]

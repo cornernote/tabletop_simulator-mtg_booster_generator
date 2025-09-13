@@ -131,7 +131,7 @@ local setImages = {
         box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666433696/DA887125A73154443749A719F198C05C16ACAEA1/",
         name = "Ravnica Remastered"
     },
-    xml = {
+    xln = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/861734852198387392/B81155A30E28760116D166987C221F946D37380E/",
         name = "Ixalan",
     },
@@ -148,8 +148,8 @@ local setImages = {
         name = "StrixHaven",
     },
     afr = {
-        pack = "Adventures in the Forgotten Realms",
-        name = "https://steamusercontent-a.akamaihd.net/ugc/1734441262522564318/D44434D1C56BA4A590591606A3A50EE4C9F607B8/",
+        name = "Adventures in the Forgotten Realms",
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/1734441262522564318/D44434D1C56BA4A590591606A3A50EE4C9F607B8/",
     },
     ust = {
         pack = {

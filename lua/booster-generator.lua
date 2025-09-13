@@ -674,7 +674,6 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
         enqueueRequest(url, function(request)
             if request.response_code == 200 then
                 local cardData = createCardDataFromJSON(request.text, i)
-                print(url .. ": " .. cardData.Nickname)
                 if cardData then
                     deck.ContainedObjects[i] = cardData
                     deck.DeckIDs[i] = cardData.CardID

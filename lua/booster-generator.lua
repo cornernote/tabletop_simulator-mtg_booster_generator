@@ -60,75 +60,62 @@ local pollInterval = 0.15  -- seconds, limit scryfall API requests to <10/sec
 local timePassed = 0
 local requestQueue = {}
 
-local defaultImage = {
+local default = {
     pack = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/",
-    box = "https://steamusercontent-a.akamaihd.net/ugc/12337440257369525692/FFAB46AA1DDF402F405DFF555D4124F785EBC27A/"
+    name = "???",
 }
 
 local setImages = {
     mystery = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1871804141033719694/FE0CC0C11B5ADB27831BAAF0FF37E95852B6F454/",
-        --box = "https://steamusercontent-a.akamaihd.net/ugc/1869552972532565911/FA78A97BBAB75CF44A7ED444920317C9CE41EABF/", -- wrong model
         name = "Mystery",
     },
     fin = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/16627771293824374075/C5699273F56C725E5F909A4CF68E0BBB40CB3212/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/12758583996214265176/92BF2AA71307A15E627B82EF92FD4081DE9F8BEF/",
         name = "Final Fantasy",
     },
     inr = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33314777894966905/8D9807FCC410A72E23B650DD45417ADE665B4E87/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33314777894958369/39DEB8D4462F1BC1D52636F874AF87D4E0FA4F36/",
         name = "Innistrad Remaster",
     },
     dft = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33315411545885589/0C728D0BDFAB373310773FA4546CC4E08B1B11A1/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33315411545850871/98EB110FF97B6A90033B81633E0293397406819A/",
         name = "Aetherdrift",
     },
     eoe = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/15223391781034002798/18D4F50FA52D5739A7AAF47270CD89A8F3161F20/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/12580228339626521582/AB004BC5138BE7C58B634A8183FE6972C0770796/",
         name = "Edge of Eternities",
     },
     tdm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33320655968555543/9ADDB19799EBAE44174466FE19E0C52F73EDDAE4/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33320655968415112/A7D3C7023F76DD7D187C1DA65A3D30007C85C5A6/",
         name = "",
     },
     fdn = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666062860/0DFCD530284A8A4EC67CCEA18399BDE9405F3C3C/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666179694/00D1056E0709307541AD18383A3C4C02FD0E1DF9/",
         name = "Foundations",
     },
     dsk = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666215369/BFD6BBAC0DE7F1F5C810F4FFCA8EF5E50EC8A03E/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666213749/327EF64F9F6599C7338FBEFD6E30F67F94687F9A/",
         name = "Duskmourn: House of Horror",
     },
     blb = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666242938/FA118E357C5820C6BF4EC70CAECC88876B22DE41/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666280402/EFA53DA40538B9B516FC204E7C03B3BDC8350C38/",
         name = "Bloomburrow",
     },
     mh3 = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666331598/112B58990D8AD19B704448588F6CC34A8BF0E2E9/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666329942/59090620BF6D0D9EEC8609C9AEEE34F744E6158B/",
         name = "Modern Horizons III",
     },
     mkm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666403145/D578E8D070D0F89BB866212A8C5FD97AE840F418/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666405067/2B88816E482872EFD864CF2809FC777C690E6055/",
         name = "Murders at Karlov Manor",
     },
     otj = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666361741/B40E45A8AE490D38D02C8D32295E71920362D781/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666378756/1E2CFB189744E3C571E628562ACCB25E2A613E45/",
         name = "Outlaws of Thunder Junction",
     },
     rvr = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666416970/8B9F38A1D618C5C025C45E8D484B097CA8F245EE/",
-        box = "https://steamusercontent-a.akamaihd.net/ugc/33313055666433696/DA887125A73154443749A719F198C05C16ACAEA1/",
         name = "Ravnica Remastered"
     },
     xln = {
@@ -172,38 +159,31 @@ local setImages = {
         name = "Inistrad Crimson VOW",
     },
     uma = {
-        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031710788/D480DA25A894F28774F9CFE05BAF98338A647B38/",
         pack = "https://i.imgur.com/4RylXgU.png",
         name = "Ultimate Masters",
     },
     cmm = {
-        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031758324/9454C7F259FF420BF408C79C67D2135CB7208342/",
         pack = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031059945/BF91A05DA4A788ED5F5C01B05305F3E4ECE8CE52/",
         name = "Commander Masters",
     },
     mma = {
-        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031581496/8F6B8B0676DA8ECD9E6077F1A396DD7697C383FB/",
         pack = "https://i.imgur.com/CU7EL6h.png",
         name = "Modern Masters",
     },
     twoxm = {
-        box = "https://steamusercontent-a.akamaihd.net/ugc/2027238089151520026/5E0945FCDF5A168C9F21D93E5D63677C8447B967/",
         pack = "https://steamusercontent-a.akamaihd.net/ugc/2027238089151521799/52EC298FBB89EA2A24DA024981161F96E3522645/",
         name = "Double Masters",
         code = "2XM"
     },
     sok = {
-        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098032381929/1C04D7E1CFD05BA6D03747877A1450B490EBD6BB/",
         pack = "https://i.imgur.com/ctFTHkw.jpg",
         name = "Saviors of Kamigawa",
     },
     neo = {
-        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098032099644/CA4A90672BD93147D4E17B42956A1B166C009628/",
         pack = "https://i.imgur.com/5FcGpqC.png",
         name = "Kamigawa: Neon Dynasty",
     },
     bok = {
-        box = "https://steamusercontent-a.akamaihd.net/ugc/2093668098032413138/3FF67A090FBD356E16AE2C041EE52C9D4D1B325B/",
         pack = "https://i.imgur.com/t6UP7lt.jpg",
         name = "Betrayers of Kamigawa",
     },
@@ -222,21 +202,21 @@ local setCodeMapping = {
     ['???'] = 'empty',
 }
 
-function onObjectLeaveContainer(container, leave_object)
+function onObjectLeaveContainer(container, leaveObject)
     if container ~= self then
         return
     end
 
     local setCode = getSetCode()
 
-    leave_object.setName(setCode .. " Booster")
+    leaveObject.setName(setCode .. " Booster")
     boosterCount = boosterCount + 1
     local currentBoosterID = boosterCount
 
-    local queryTable = getScryfallQueryTable()
-    fetchDeckData(queryTable, currentBoosterID)
+    local urls = getSetUrls(setCode)
+    fetchDeckData(currentBoosterID, urls, leaveObject)
 
-    leave_object.createButton({
+    leaveObject.createButton({
         label = "generating " .. setCode,
         click_function = 'null',
         function_owner = self,
@@ -244,45 +224,33 @@ function onObjectLeaveContainer(container, leave_object)
         rotation = { 0, 0, 0 },
         width = 1000,
         height = 200,
-        font_size = 130,
+        font_size = 100,
         color = { 0, 0, 0, 95 },
         font_color = { 1, 1, 1, 95 },
     })
 
-    local mappedSetCode = setCodeMapping[string.lower(setCode)] or string.lower(setCode)
-    local diffuseImage = defaultImage.pack
-    local packImage = setImages[mappedSetCode] and setImages[mappedSetCode].pack
+    local packImage = getPackImage(setCode)
 
-    if packImage then
-        if type(packImage) == "string" then
-            diffuseImage = packImage
-        elseif type(packImage) == "table" then
-            diffuseImage = packImage[math.random(1, #packImage)]
-        else
-            packImage = null
-        end
-    end
-
-    leave_object.setCustomObject({
-        diffuse = diffuseImage
+    leaveObject.setCustomObject({
+        diffuse = packImage
     })
 
     Wait.condition(
             function()
                 Wait.condition(
                         function()
-                            local objectData = leave_object.getData()
+                            local objectData = leaveObject.getData()
                             objectData.ContainedObjects = boosterDataCache[currentBoosterID]
-                            leave_object.destruct()
+                            leaveObject.destruct()
                             local generatedBooster = spawnObjectData({ data = objectData })
                             local packLuaScript = packLua
-                            if not packImage then
-                                packLuaScript = packLuaScript .. packLabelLua
+                            if packImage == default.pack then
+                                packLuaScript = packLuaScript .. "\n" .. packLabelLua
                             end
                             generatedBooster.setLuaScript(packLuaScript)
                         end,
                         function()
-                            return leave_object.resting
+                            return leaveObject.resting
                         end
                 )
             end,
@@ -292,56 +260,50 @@ function onObjectLeaveContainer(container, leave_object)
     )
 end
 
+function getPackImage(setCode)
+    local mappedSetCode = setCodeMapping[string.lower(setCode)] or string.lower(setCode)
+    local packImage = setImages[mappedSetCode] and setImages[mappedSetCode].pack
+
+    if packImage then
+        if type(packImage) == "string" then
+            return packImage
+        elseif type(packImage) == "table" then
+            return packImage[math.random(1, #packImage)]
+        end
+    end
+
+    return default.pack
+end
+
 function drawBox()
     self.clearButtons()
 
     local setCode = getSetCode()
-    local mappedSetCode = setCodeMapping[string.lower(setCode)] or string.lower(setCode)
-    local diffuseImage = defaultImage.box
+    local packImage = getPackImage(setCode)
 
-    if setImages[mappedSetCode] and setImages[mappedSetCode].box then
-        diffuseImage = setImages[mappedSetCode].box
-    end
-
-    if self.getCustomObject().diffuse ~= diffuseImage then
+    if self.getCustomObject().diffuse ~= packImage then
         self.setCustomObject({
-            diffuse = diffuseImage
+            diffuse = packImage
         })
         self.reload()
     end
 
-    if not setImages[mappedSetCode] or not setImages[mappedSetCode].box then
+    if packImage == default.pack then
         self.createButton({
-            click_function = "null",
-            function_owner = self,
             label = setCode .. " Boosters",
-            position = { -0.71, -0.07, 0.15 },
-            rotation = { 0, 90, 270 },
-            color = { 0.1, 0.1, 0.1, 1 },
-            font_color = { 0.8, 0.8, 0.8, 0.8 },
-            scale = { 0.7, 0.7, 0.7 },
-            width = 0,
-            height = 0,
-            font_size = 220,
-        })
-
-        self.createButton({
-            click_function = "null",
+            click_function = 'null',
             function_owner = self,
-            label = setCode,
-            position = { 0, 0.33, 0.2 },
-            rotation = { 0, 90, 0 },
-            color = { 0.1, 0.1, 0.1, 1 },
-            font_color = { 0.8, 0.8, 0.8, 0.8 },
-            scale = { 0.7, 0.7, 0.7 },
-            width = 0,
-            height = 0,
-            font_size = 500,
+            position = { 0, 0.2, -1.6 },
+            rotation = { 0, 0, 0 },
+            width = 1000,
+            height = 200,
+            font_size = 150,
+            color = { 0, 0, 0, 95 },
+            font_color = { 1, 1, 1, 95 },
         })
 
         if #setCode > 3 then
-            self.editButton({ index = 0, font_size = 160 })
-            self.editButton({ index = 1, font_size = 250 })
+            self.editButton({ index = 0, font_size = 150 })
         end
     end
 end
@@ -349,6 +311,34 @@ end
 function onLoad()
     drawBox()
     lastDescription = self.getDescription()
+    self.addContextMenuItem("Spawn Boxes", spawnSupportedPacks)
+end
+
+function spawnSupportedPacks()
+    local sets = {}
+    for code, _ in pairs(setImages) do
+        table.insert(sets, code)
+    end
+    table.sort(sets)
+
+    local startPos = self.getPosition() + Vector(3, 0, 0)
+    local cols = 10
+    local spacingX = 3
+    local spacingY = 5
+
+    for index, code in ipairs(sets) do
+        local row = math.floor((index - 1) / cols)
+        local col = (index - 1) % cols
+        local copy = self.clone({
+            position = {
+                x = startPos.x + col * spacingX,
+                y = startPos.y,
+                z = startPos.z - row * spacingY
+            },
+            snap_to_grid = false,
+        })
+        copy.setDescription("SET: " .. string.upper(code))
+    end
 end
 
 function onUpdate()
@@ -372,7 +362,7 @@ end
 function getSetCode()
     -- Trim leading/trailing whitespace from the captured text
     -- This makes sure " SET: M15 " becomes "M15"
-    local setCode = self.getDescription():match("^SET:%s*(%S+)") or "???"
+    local setCode = string.upper(self.getDescription()):match("SET:%s*(%S+)") or default.name
 
     if #setCode > 3 then
         setCode = string.lower(setCode):gsub("^%l", string.upper)
@@ -517,61 +507,61 @@ BoosterPacks.empty = function()
 end
 
 BoosterPacks.mystery = function()
-    local urlTable = {}
+    local urls = {}
     local urlPrefix = config.apiBaseURL .. 'set:mb1+'
     for _, c in ipairs({ 'w', 'u', 'b', 'r', 'g' }) do
-        table.insert(urlTable, urlPrefix .. 'r<rare+c=' .. c)
-        table.insert(urlTable, urlPrefix .. 'r<rare+c=' .. c)
+        table.insert(urls, urlPrefix .. 'r<rare+c=' .. c)
+        table.insert(urls, urlPrefix .. 'r<rare+c=' .. c)
     end
-    table.insert(urlTable, urlPrefix .. 'c:m+r<rare')
-    table.insert(urlTable, urlPrefix .. 'c:c+r<rare')
-    table.insert(urlTable, urlPrefix .. 'r>=rare+frame:2015')
-    table.insert(urlTable, urlPrefix .. 'r>=rare+-frame:2015')
-    table.insert(urlTable, config.apiBaseURL .. 'set:cmb1')
-    return urlTable
+    table.insert(urls, urlPrefix .. 'c:m+r<rare')
+    table.insert(urls, urlPrefix .. 'c:c+r<rare')
+    table.insert(urls, urlPrefix .. 'r>=rare+frame:2015')
+    table.insert(urls, urlPrefix .. 'r>=rare+-frame:2015')
+    table.insert(urls, config.apiBaseURL .. 'set:cmb1')
+    return urls
 end
 
 BoosterPacks.spm = function()
     local big = 1000000000000;
-    local pack = {}
+    local urls = {}
     local url = config.apiBaseURL .. 's:spm+'
     -- table.insert(pack, url .. 't:land') -- it should have a land, but i added another common
-    table.insert(pack, url .. getRandomRarity(big, 1))
+    table.insert(urls, url .. getRandomRarity(big, 1))
     for i = 1, 7 do
-        table.insert(pack, url .. 'r:common+-t:basic')
+        table.insert(urls, url .. 'r:common+-t:basic')
     end
     for i = 1, 3 do
-        table.insert(pack, url .. 'r:uncommon')
+        table.insert(urls, url .. 'r:uncommon')
     end
-    table.insert(pack, url .. getRandomRarity(8, 3, 1))
-    table.insert(pack, url .. getRandomRarity(big, 30, 3))
-    table.insert(pack, url .. getRandomRarity(big, 300, big))
-    return pack
+    table.insert(urls, url .. getRandomRarity(8, 3, 1))
+    table.insert(urls, url .. getRandomRarity(big, 30, 3))
+    table.insert(urls, url .. getRandomRarity(big, 300, big))
+    return urls
 end
 
 BoosterPacks.stx = function()
-    local pack = {}
+    local urls = {}
     local url = apiSetPrefix .. 'stx+'
     local archiveURL = config.apiBaseURL .. 'set:sta+r>common+'
-    table.insert(pack, archiveURL .. (math.random(2) == 1 and 'lang:en' or 'lang:ja'))
-    table.insert(pack, url .. 't:lesson+-r:u')
-    table.insert(pack, url .. getRandomRarity(8, 1))
+    table.insert(urls, archiveURL .. (math.random(2) == 1 and 'lang:en' or 'lang:ja'))
+    table.insert(urls, url .. 't:lesson+-r:u')
+    table.insert(urls, url .. getRandomRarity(8, 1))
     for i = 1, 3 do
-        table.insert(pack, url .. 'r:u')
+        table.insert(urls, url .. 'r:u')
     end
     for _, c in ipairs({ 'w', 'u', 'b', 'r', 'g' }) do
-        table.insert(pack, url .. 'r:c+c:' .. c)
+        table.insert(urls, url .. 'r:c+c:' .. c)
     end
     for i = 1, 3 do
-        table.insert(pack, url .. 'r:c+-t:basic')
+        table.insert(urls, url .. 'r:c+-t:basic')
     end
 
     if math.random(3) == 1 then
-        table.insert(pack, url)
+        table.insert(urls, url)
     else
-        table.insert(pack, url .. 'r:c+-t:basic')
+        table.insert(urls, url .. 'r:c+-t:basic')
     end
-    return pack
+    return urls
 end
 
 local function createCustomBooster(setQuery, packStructure)
@@ -581,55 +571,55 @@ local function createCustomBooster(setQuery, packStructure)
     end
 end
 
-BoosterPacks.standard = createCustomBooster('f:standard', function(pack)
+BoosterPacks.standard = createCustomBooster('f:standard', function(urls)
     local url = config.apiBaseURL .. 'f:standard+'
     local artSets = '(set:tafr+or+set:tstx+or+set:tkhm+or+set:tznr+or+set:sznr+or+set:tm21+or+set:tiko+or+set:tthb+or+set:teld)'
     local artQuery = '(border:borderless+or+frame:showcase+or+frame:extendedart+or+set:plist+or+set:sta)'
-    table.insert(pack, url .. 't:basic')
-    table.insert(pack, config.apiBaseURL .. artSets)
+    table.insert(urls, url .. 't:basic')
+    table.insert(urls, config.apiBaseURL .. artSets)
     if math.random(2) == 1 then
-        pack[#pack - 1] = url .. artQuery
+        urls[#urls - 1] = url .. artQuery
     end
     if math.random(2) == 1 then
-        pack[#pack] = url .. artQuery
+        urls[#urls] = url .. artQuery
     end
-    return pack
+    return urls
 end)
 
-BoosterPacks.conspiracy = createCustomBooster('(s:cns+or+s:cn2)', function(pack)
-    table.insert(pack, pack[#pack]:gsub('r:%S+', getRandomRarity(9, 6, 3)))
-    pack[6] = pack[math.random(11, 12)]
-    for i, _ in pairs(pack) do
-        local query = (i == 6 or i == #pack) and '+wm:conspiracy' or '+-wm:conspiracy'
-        pack[i] = pack[i] .. query
+BoosterPacks.conspiracy = createCustomBooster('(s:cns+or+s:cn2)', function(urls)
+    table.insert(urls, urls[#urls]:gsub('r:%S+', getRandomRarity(9, 6, 3)))
+    urls[6] = urls[math.random(11, 12)]
+    for i, _ in pairs(urls) do
+        local query = (i == 6 or i == #urls) and '+wm:conspiracy' or '+-wm:conspiracy'
+        urls[i] = urls[i] .. query
     end
-    return pack
+    return urls
 end)
 
-BoosterPacks.innistrad = createCustomBooster('(s:isd+or+s:dka+or+s:avr+or+s:soi+or+s:emn+or+s:mid)', function(pack)
-    table.insert(pack, pack[#pack]:gsub('r:%S+', getRandomRarity(8, 1)))
-    pack[11] = pack[12]
-    for i, _ in pairs(pack) do
-        local query = (i == 6 or i == #pack or i == #pack - 2) and '+is:transform' or '+-is:transform'
-        pack[i] = pack[i] .. query
+BoosterPacks.innistrad = createCustomBooster('(s:isd+or+s:dka+or+s:avr+or+s:soi+or+s:emn+or+s:mid)', function(urls)
+    table.insert(urls, urls[#urls]:gsub('r:%S+', getRandomRarity(8, 1)))
+    urls[11] = urls[12]
+    for i, _ in pairs(urls) do
+        local query = (i == 6 or i == #urls or i == #urls - 2) and '+is:transform' or '+-is:transform'
+        urls[i] = urls[i] .. query
     end
-    return pack
+    return urls
 end)
 
-BoosterPacks.ravnica = createCustomBooster('(s:rav+or+s:gpt+or+s:dis+or+s:rtr+or+s:gtc+or+s:dgm+or+s:grn+or+s:rna)', function(pack)
+BoosterPacks.ravnica = createCustomBooster('(s:rav+or+s:gpt+or+s:dis+or+s:rtr+or+s:gtc+or+s:dgm+or+s:grn+or+s:rna)', function(urls)
     local landQuery = 't:land+-t:basic'
-    table.insert(pack, pack[#pack])
+    table.insert(urls, urls[#urls])
     for i = 7, 9 do
-        pack[i] = pack[6] .. '+id>=2'
+        urls[i] = urls[6] .. '+id>=2'
     end
-    for i, _ in pairs(pack) do
-        if i == 6 or i == #pack then
-            pack[i] = pack[i]:gsub('r:%S+', getRandomRarity(9, 6, 3)) .. '+' .. landQuery
+    for i, _ in pairs(urls) do
+        if i == 6 or i == #urls then
+            urls[i] = urls[i]:gsub('r:%S+', getRandomRarity(9, 6, 3)) .. '+' .. landQuery
         else
-            pack[i] = pack[i] .. '+-' .. landQuery
+            urls[i] = urls[i] .. '+-' .. landQuery
         end
     end
-    return pack
+    return urls
 end)
 
 function enqueueRequest(url, callback)
@@ -644,16 +634,19 @@ function processRequestQueue()
     WebRequest.get(req.url, req.callback)
 end
 
-function getScryfallQueryTable()
-    local setCode = string.lower(getSetCode())
+function getSetUrls(setCode)
     local mappedSetCode = setCodeMapping[setCode] or setCode
     local packGenerator = BoosterPacks[mappedSetCode] or BoosterPacks.default
     return packGenerator(setCode)
 end
 
-function fetchDeckData(urlTable, boosterID)
-    local setCode = getSetCode();
-    local deck = {
+function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, replaceIndices, originalUrls)
+    attempts = attempts or 0
+    originalUrls = originalUrls or urls
+
+    local setCode = getSetCode()
+
+    local deck = existingDeck or {
         Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 180, rotZ = 180, scaleX = 1, scaleY = 1, scaleZ = 1 },
         Name = "Deck",
         Nickname = setCode .. " Booster",
@@ -663,72 +656,87 @@ function fetchDeckData(urlTable, boosterID)
         ContainedObjects = {},
     }
 
-    local requestsPending = #urlTable
+    local requestsPending = #urls
     local requestsCompleted = 0
     local requestErrors = {}
 
-    for i, url in ipairs(urlTable) do
+    for j, url in ipairs(urls) do
+        local i = replaceIndices and replaceIndices[j] or j
         enqueueRequest(url, function(request)
-            if request.response_code ~= 200 then
-                local errorInfo = JSON.decode(request.text)
-                local message = errorInfo and errorInfo.details or (request.error .. ": " .. request.text)
-                table.insert(requestErrors, { url = url, message = message })
-            else
+            if request.response_code == 200 then
                 local cardData = createCardDataFromJSON(request.text, i)
                 if cardData then
                     deck.ContainedObjects[i] = cardData
                     deck.DeckIDs[i] = cardData.CardID
                     deck.CustomDeck[i] = cardData.CustomDeck[i]
                 end
+            else
+                local errorInfo = JSON.decode(request.text)
+                local message = errorInfo and errorInfo.details or (request.error .. ": " .. request.text)
+                table.insert(requestErrors, { url = url, message = message })
             end
             requestsCompleted = requestsCompleted + 1
+
+            local remaining = requestsPending - requestsCompleted
+            local label = "Generating " .. setCode .. " (" .. (remaining + 1) .. ")"
+            if attempts > 0 then
+                label = "Deduping " .. setCode .. " (" .. (attempts + 1) .. ": " .. (remaining + 1) .. ")"
+            end
+            if leaveObject then
+                leaveObject.editButton({
+                    index = 0,
+                    label = label,
+                })
+            end
         end)
     end
 
     Wait.condition(
             function()
-                local cardNames = {}
-                local hasDuplicates = false
-                for _, card in ipairs(deck.ContainedObjects) do
-                    if cardNames[card.Nickname] then
-                        hasDuplicates = true
-                        break
+                local seen, dupes = {}, {}
+                for i, card in ipairs(deck.ContainedObjects) do
+                    if card then
+                        if seen[card.Nickname] then
+                            table.insert(dupes, i)
+                        else
+                            seen[card.Nickname] = true
+                        end
                     end
-                    cardNames[card.Nickname] = true
                 end
 
-                if hasDuplicates then
-                    fetchDeckData(urlTable, boosterID)
+                if #dupes > 0 then
+                    local dupeUrls = {}
+                    for _, i in ipairs(dupes) do
+                        table.insert(dupeUrls, originalUrls[i])
+                    end
+
+                    Wait.time(function()
+                        fetchDeckData(boosterID, dupeUrls, leaveObject, attempts + 1, deck, dupes, originalUrls)
+                    end, 0.1)
                 else
-                    local boosterContents = { }
-                    if setCode == "???" then
-                        local instructionNotecard = {
+                    local boosterContents = {}
+                    if setCode == default.name then
+                        table.insert(boosterContents, {
                             Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
                             Name = "Notecard",
-                            Nickname = "SUPPORTED SETS",
-                            Description = getSupportedSets(),
+                            Nickname = 'REPLACE "SET: XXX" IN BOX DESCRIPTION',
+                            Description = "\nAlmost all sets are supported, see:\nhttps://scryfall.com/sets\n\nCustom pack images are available for:\n" .. getSupportedSets(),
                             Grid = false,
                             Snap = false,
-                        }
-                        table.insert(boosterContents, instructionNotecard)
+                        })
                     else
                         table.insert(boosterContents, deck)
                     end
 
-                    if #requestErrors > 0 then
-                        for _, error in ipairs(requestErrors) do
-                            local errorNotecard = {
-                                Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
-                                Name = "Notecard",
-                                Nickname = "Booster Generation Error",
-                                Description = "url: " .. error.url .. "\n\n" .. error.message,
-                                Grid = false,
-                                Snap = false,
-                            }
-                            table.insert(boosterContents, errorNotecard)
-                        end
-
-                        requestErrors = {}
+                    for _, error in ipairs(requestErrors) do
+                        table.insert(boosterContents, {
+                            Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
+                            Name = "Notecard",
+                            Nickname = "Booster Generation Error",
+                            Description = "url: " .. error.url .. "\n\n" .. error.message,
+                            Grid = false,
+                            Snap = false,
+                        })
                     end
 
                     boosterDataCache[boosterID] = boosterContents
@@ -835,18 +843,12 @@ end
 
 function getSupportedSets()
     local packs = {}
-    local boxes = {}
 
     for code, data in pairs(setImages) do
         if data.pack then
             table.insert(packs, data.code or string.upper(code))
         end
-        if data.box then
-            table.insert(boxes, data.code or string.upper(code))
-        end
     end
 
-    return ("supported packs: " .. table.concat(packs, ", ")
-            .. "\n\n"
-            .. "supported boxes: " .. table.concat(boxes, ", "))
+    return table.concat(packs, ", ")
 end

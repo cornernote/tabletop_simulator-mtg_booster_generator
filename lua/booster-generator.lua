@@ -834,7 +834,6 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
                     end, 0.1)
                 else
                     local boosterContents = {}
-                    print(setCode .. "==" .. defaultImages.name)
                     if setCode == defaultImages.name then
                         table.insert(boosterContents, {
                             Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },

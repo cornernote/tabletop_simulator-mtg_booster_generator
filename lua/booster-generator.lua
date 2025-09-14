@@ -6,7 +6,7 @@
 
 local config = {
     backURL = 'https://steamusercontent-a.akamaihd.net/ugc/1647720103762682461/35EF6E87970E2A5D6581E7D96A99F8A575B7A15F/',
-    apiBaseURL = 'http://api.scryfall.com/cards/random?q='
+    apiBaseURL = 'http://api.scryfall.com/cards/random?q=',
 }
 
 local packLua = [[
@@ -372,7 +372,10 @@ end
 function onLoad()
     drawBox()
     lastDescription = self.getDescription()
-    self.addContextMenuItem("Spawn Boxes", spawnSupportedPacks)
+
+    if getSetCode() == defaultImages.name then
+        self.addContextMenuItem("Spawn Boxes", spawnSupportedPacks)
+    end
 end
 
 function spawnSupportedPacks()
@@ -456,9 +459,6 @@ function getSetCode()
     return setCode
 end
 
-local BoosterPacks = {}
-local apiSetPrefix = config.apiBaseURL .. 'is:booster+s:'
-
 local function getRandomRarity(mythicChance, rareChance, uncommonChance)
     if math.random(1, mythicChance or 36) == 1 then
         return 'r:mythic'
@@ -489,9 +489,15 @@ local MasterpieceSets = {
     tsp = 'tsb', mb1 = 'fmb1', mh2 = 'h1r'
 }
 
-function BoosterPacks.default(set)
+local BoosterPacks = {}
+
+function BoosterPacks.empty(set)
+    return {}
+end
+
+function BoosterPacks.default15Card(set)
     local urls = {}
-    local url = apiSetPrefix .. set .. '+'
+    local url = config.apiBaseURL .. 's:' .. set .. '+'
     url = url:gsub('%+s:%(', '+(')
 
     table.insert(urls, url .. 't:basic')
@@ -514,12 +520,50 @@ function BoosterPacks.default(set)
     return urls
 end
 
+function BoosterPacks.default14Card(set)
+    local urls = {}
+    local url = config.apiBaseURL .. 's:' .. set .. '+'
+    url = url:gsub('%+s:%(', '+(')
+
+    table.insert(urls, url .. 't:basic')
+    for c in ('wubrg'):gmatch('.') do
+        table.insert(urls, url .. 'r:common+-t:basic+c>=' .. c)
+    end
+    table.insert(urls, url .. 'r:common+-t:basic')
+    for i = 1, 3 do
+        table.insert(urls, url .. 'r:uncommon')
+    end
+
+    table.insert(urls, url .. getRandomRarity(big, 300, big))
+    table.insert(urls, url .. getRandomRarity(big, 30, 3))
+    table.insert(urls, url .. getRandomRarity(big, 3, 1))
+    table.insert(urls, url .. getRandomRarity(8, 1))
+
+    if MasterpieceSets[set] and math.random(1, 144) == 1 then
+        urls[#urls] = config.apiBaseURL .. 's:' .. MasterpieceSets[set]
+    end
+
+    return urls
+end
+
+function BoosterPacks.default(set)
+    return BoosterPacks.default15Card(set)
+end
+
+for _, s in ipairs({ 'mkm', 'otj', 'mh3', 'blb', 'dsk', 'chk', 'fdn', 'inr', 'bok', 'dft', 'tdm', 'fin', 'eoe', 'spm' }) do
+    BoosterPacks[s] = function(set)
+        return BoosterPacks.default14Card(set)
+    end
+end
+
 function BoosterPacks.dom(set)
     return addCardTypeToPack(BoosterPacks.default(set), 't:legendary')
 end
+
 function BoosterPacks.war(set)
     return addCardTypeToPack(BoosterPacks.default(set), 't:planeswalker')
 end
+
 function BoosterPacks.znr(set)
     return addCardTypeToPack(BoosterPacks.default(set), 't:land+(is:spell+or+pathway)')
 end
@@ -529,17 +573,17 @@ function BoosterPacks.twoxm(set)
     urls[1] = urls[7]
     urls[11] = urls[#urls]
     for i = 9, 10 do
-        urls[i] = apiSetPrefix .. '2xm' .. '+' .. getRandomRarity()
+        urls[i] = config.apiBaseURL .. 's:2xm+' .. getRandomRarity()
     end
     return urls
 end
 
 local function createReplacementSlotPack(urls, set, removeQuery, addQuery)
     for i, v in pairs(urls) do
-        if i ~= 6 then
+        if i ~= 7 then
             urls[i] = v .. removeQuery
         else
-            urls[i] = apiSetPrefix .. set .. '+' .. getRandomRarity() .. addQuery
+            urls[i] = config.apiBaseURL .. 's:' .. set .. '+' .. getRandomRarity() .. addQuery
         end
     end
     return urls
@@ -556,7 +600,7 @@ for _, s in ipairs({ 'mid' }) do
         local urls = BoosterPacks.default(set)
         local transformIndex = math.random(#urls - 1, #urls)
         for i, v in pairs(urls) do
-            if i == 6 or i == transformIndex then
+            if i == 7 or i == transformIndex then
                 urls[i] = v .. '+is:transform'
             else
                 urls[i] = v .. '+-is:transform'
@@ -572,62 +616,33 @@ for _, s in ipairs({ 'cns', 'cn2' }) do
     end
 end
 
---for _, s in ipairs({ 'rav', 'gpt', 'dis', 'rtr', 'gtc', 'dgm', 'grn', 'rna' }) do
---    BoosterPacks[s] = function(set)
---        return createReplacementSlotPack(BoosterPacks.default(set), set, '+-t:land', '+t:land')
---    end
---end
-
 for _, s in ipairs({ 'ice', 'all', 'csp', 'mh1', 'khm' }) do
     BoosterPacks[s] = function(set)
         local urls = BoosterPacks.default(set)
-        urls[7] = apiSetPrefix .. set .. '+t:basic+t:snow'
+        urls[7] = config.apiBaseURL .. 's:' .. set .. '+t:basic+t:snow'
         return urls
     end
 end
 
-BoosterPacks.empty = function()
-    return {}
-end
-
 BoosterPacks.cmb1 = function()
     local urls = {}
-    local urlPrefix = config.apiBaseURL .. 'set:mb1+' -- seems to load set:plst (The List)
+    local url = config.apiBaseURL .. 's:mb1+' -- seems to load s:plst (The List)
     for _, c in ipairs({ 'w', 'u', 'b', 'r', 'g' }) do
-        table.insert(urls, urlPrefix .. 'r<rare+c=' .. c)
-        table.insert(urls, urlPrefix .. 'r<rare+c=' .. c)
+        table.insert(urls, url .. 'r<rare+c=' .. c)
+        table.insert(urls, url .. 'r<rare+c=' .. c)
     end
-    table.insert(urls, urlPrefix .. 'c:m+r<rare')
-    table.insert(urls, urlPrefix .. 'c:c+r<rare')
-    table.insert(urls, urlPrefix .. 'r>=rare+frame:2015')
-    table.insert(urls, urlPrefix .. 'r>=rare+-frame:2015')
-    table.insert(urls, config.apiBaseURL .. 'set:cmb1')
-    return urls
-end
-
-BoosterPacks.spm = function()
-    local big = 1000000000000;
-    local urls = {}
-    local url = config.apiBaseURL .. 's:spm+'
-    table.insert(urls, url .. 't:basic')
-    for c in ('wubrg'):gmatch('.') do
-        table.insert(urls, url .. 'r:common+-t:basic+c>=' .. c)
-    end
-    table.insert(urls, url .. 'r:common+-t:basic')
-    for i = 1, 3 do
-        table.insert(urls, url .. 'r:uncommon')
-    end
-    table.insert(urls, url .. getRandomRarity(8, 1))
-    table.insert(urls, url .. getRandomRarity(big, 3, 1))
-    table.insert(urls, url .. getRandomRarity(big, 30, 3))
-    table.insert(urls, url .. getRandomRarity(big, 300, big))
+    table.insert(urls, url .. 'c:m+r<rare')
+    table.insert(urls, url .. 'c:c+r<rare')
+    table.insert(urls, url .. 'r>=rare+frame:2015')
+    table.insert(urls, url .. 'r>=rare+-frame:2015')
+    table.insert(urls, config.apiBaseURL .. 's:cmb1')
     return urls
 end
 
 BoosterPacks.stx = function()
     local urls = {}
-    local url = apiSetPrefix .. 'stx+'
-    local archiveURL = config.apiBaseURL .. 'set:sta+r>common+'
+    local url = config.apiBaseURL .. 's:stx+'
+    local archiveURL = config.apiBaseURL .. 's:sta+r>common+'
     table.insert(urls, archiveURL .. (math.random(2) == 1 and 'lang:en' or 'lang:ja'))
     table.insert(urls, url .. 't:lesson+-r:u')
     table.insert(urls, url .. getRandomRarity(8, 1))
@@ -658,8 +673,8 @@ end
 
 BoosterPacks.standard = createCustomBooster('f:standard', function(urls)
     local url = config.apiBaseURL .. 'f:standard+'
-    local artSets = '(set:tafr+or+set:tstx+or+set:tkhm+or+set:tznr+or+set:sznr+or+set:tm21+or+set:tiko+or+set:tthb+or+set:teld)'
-    local artQuery = '(border:borderless+or+frame:showcase+or+frame:extendedart+or+set:plist+or+set:sta)'
+    local artSets = '(s:tafr+or+s:tstx+or+s:tkhm+or+s:tznr+or+s:sznr+or+s:tm21+or+s:tiko+or+s:tthb+or+s:teld)'
+    local artQuery = '(border:borderless+or+frame:showcase+or+frame:extendedart+or+s:plist+or+s:sta)'
     table.insert(urls, url .. 't:basic')
     table.insert(urls, config.apiBaseURL .. artSets)
     if math.random(2) == 1 then
@@ -814,6 +829,7 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
                     end, 0.1)
                 else
                     local boosterContents = {}
+                    print(setCode .. "==" .. defaultImages.name)
                     if setCode == defaultImages.name then
                         table.insert(boosterContents, {
                             Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },

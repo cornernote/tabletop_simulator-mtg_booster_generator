@@ -229,6 +229,11 @@ local setImages = {
         name = "Marvel's Spider-Man",
         date = "2025-09-26",
     },
+    tla = {
+        pack = "https://steamusercontent-a.akamaihd.net/ugc/18426860329109062848/8608CEB001CF861FC4A6AEB7DEFC99036DDCBC03/",
+        name = "Avatar: The Last Airbender",
+        date = "2025-11-21",
+    },
 }
 
 local setCodeMapping = {
@@ -250,7 +255,7 @@ function onObjectLeaveContainer(container, leaveObject)
     local setData = setImages[mappedSetCode]
     if setData then
         leaveObject.setName(setData.name .. " Booster (" .. setCode .. ")")
-        leaveObject.setDescription("SET: " .. setCode .. "\nRelease Date: " .. setData.date)
+        leaveObject.setDescription("SET: " .. setCode .. "\nReleased: " .. setData.date)
     else
         leaveObject.setName(setCode .. " Booster")
     end
@@ -420,7 +425,7 @@ function spawnSupportedPacks()
 
         if setData then
             copy.setName(setData.name .. " Boosters (" .. string.upper(mappedSetCode) .. ")")
-            copy.setDescription("SET: " .. string.upper(mappedSetCode) .. "\nRelease Date: " .. setData.date)
+            copy.setDescription("SET: " .. string.upper(mappedSetCode) .. "\nReleased: " .. setData.date)
         else
             copy.setName(string.upper(mappedSetCode) .. " Boosters")
         end
@@ -550,7 +555,7 @@ function BoosterPacks.default(set)
     return BoosterPacks.default15Card(set)
 end
 
-for _, s in ipairs({ 'mkm', 'otj', 'mh3', 'blb', 'dsk', 'chk', 'fdn', 'inr', 'bok', 'dft', 'tdm', 'fin', 'eoe', 'spm' }) do
+for _, s in ipairs({ 'mkm', 'otj', 'mh3', 'blb', 'dsk', 'chk', 'fdn', 'inr', 'bok', 'dft', 'tdm', 'fin', 'eoe', 'spm', 'tla' }) do
     BoosterPacks[s] = function(set)
         return BoosterPacks.default14Card(set)
     end

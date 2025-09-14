@@ -398,7 +398,7 @@ function spawnSupportedPacks()
 
     for index, entry in ipairs(setCodes) do
         local setCode = entry.code
-        local data = setImages[setCode]
+        local setData = setImages[setCode]
 
         local row = math.floor((index - 1) / cols)
         local col = (index - 1) % cols
@@ -416,8 +416,8 @@ function spawnSupportedPacks()
         local mappedSetCode = reverseSetCodeMapping[lowerSetCode] or lowerSetCode
 
         if setData then
-            copy.setName(data.name .. " Boosters (" .. string.upper(mappedSetCode) .. ")")
-            copy.setDescription("SET: " .. string.upper(mappedSetCode) .. "\nRelease Date: " .. data.date)
+            copy.setName(setData.name .. " Boosters (" .. string.upper(mappedSetCode) .. ")")
+            copy.setDescription("SET: " .. string.upper(mappedSetCode) .. "\nRelease Date: " .. setData.date)
         else
             copy.setName(string.upper(mappedSetCode) .. " Boosters")
         end
@@ -818,7 +818,7 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
                         table.insert(boosterContents, {
                             Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
                             Name = "Notecard",
-                            Nickname = 'REPLACE "SET: XXX" IN BOX DESCRIPTION',
+                            Nickname = 'REPLACE "SET: ???" IN BOX DESCRIPTION',
                             Description = "\nAlmost all sets are supported, see:\nhttps://scryfall.com/sets\n\nCustom pack images are available for:\n" .. getSupportedSets(),
                             Grid = false,
                             Snap = false,

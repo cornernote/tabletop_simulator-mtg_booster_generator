@@ -683,8 +683,14 @@ BoosterPacks.ravnica = createCustomBooster('(s:rav+or+s:gpt+or+s:dis+or+s:rtr+or
     return urls
 end)
 
-function enqueueRequest(url, callback)
-    table.insert(requestQueue, { url = url, callback = callback })
+function enqueueRequest(url, callback, position)
+    local entry = { url = url, callback = callback }
+
+    if position == "start" then
+        table.insert(requestQueue, 1, entry)
+    else
+        table.insert(requestQueue, entry)
+    end
 end
 
 function processRequestQueue()
@@ -758,7 +764,7 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
                     label = label,
                 })
             end
-        end)
+        end, existingDeck and "start" or "end")
     end
 
     Wait.condition(

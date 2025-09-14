@@ -69,74 +69,92 @@ local setImages = {
     mystery = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1871804141033719694/FE0CC0C11B5ADB27831BAAF0FF37E95852B6F454/",
         name = "Mystery",
+        date = "",
     },
     fin = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/16627771293824374075/C5699273F56C725E5F909A4CF68E0BBB40CB3212/",
         name = "Final Fantasy",
+        date = "2025-06-13",
     },
     inr = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33314777894966905/8D9807FCC410A72E23B650DD45417ADE665B4E87/",
         name = "Innistrad Remaster",
+        date = "2025-01-24",
     },
     dft = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33315411545885589/0C728D0BDFAB373310773FA4546CC4E08B1B11A1/",
         name = "Aetherdrift",
+        date = "2025-02-14",
     },
     eoe = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/15223391781034002798/18D4F50FA52D5739A7AAF47270CD89A8F3161F20/",
         name = "Edge of Eternities",
+        date = "2025-08-01",
     },
     tdm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33320655968555543/9ADDB19799EBAE44174466FE19E0C52F73EDDAE4/",
-        name = "",
+        name = "Tarkir: Dragonstorm",
+        date = "2025-04-11",
     },
     fdn = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666062860/0DFCD530284A8A4EC67CCEA18399BDE9405F3C3C/",
         name = "Foundations",
+        date = "2024-11-15",
     },
     dsk = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666215369/BFD6BBAC0DE7F1F5C810F4FFCA8EF5E50EC8A03E/",
         name = "Duskmourn: House of Horror",
+        date = "2024-09-27",
     },
     blb = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666242938/FA118E357C5820C6BF4EC70CAECC88876B22DE41/",
         name = "Bloomburrow",
+        date = "2024-08-12",
     },
     mh3 = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666331598/112B58990D8AD19B704448588F6CC34A8BF0E2E9/",
         name = "Modern Horizons III",
+        date = "2024-06-14",
     },
     mkm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666403145/D578E8D070D0F89BB866212A8C5FD97AE840F418/",
         name = "Murders at Karlov Manor",
+        date = "2024-02-09",
     },
     otj = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666361741/B40E45A8AE490D38D02C8D32295E71920362D781/",
         name = "Outlaws of Thunder Junction",
+        date = "2024-04-19",
     },
     rvr = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/33313055666416970/8B9F38A1D618C5C025C45E8D484B097CA8F245EE/",
-        name = "Ravnica Remastered"
+        name = "Ravnica Remastered",
+        date = "2024-01-12",
     },
     xln = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/861734852198387392/B81155A30E28760116D166987C221F946D37380E/",
         name = "Ixalan",
+        date = "2023-11-17",
     },
     khm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1734441450301159293/A7F7C010D0312D856CD8667678F5732BDB8F6EB2/",
         name = "Kaldheim",
+        date = "2021-02-05",
     },
     mid = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1734441450308868762/12F6CE09A39E5FEC3B472EBE54562B92A7332027/",
         name = "Innistrad: Midnight Hunt",
+        date = "2021-09-24",
     },
     stx = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1734441184603578733/2009A7D782D40F1456733EFE30ACC064D12B5FFD/",
         name = "StrixHaven",
+        date = "2021-04-23",
     },
     afr = {
         name = "Adventures in the Forgotten Realms",
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1734441262522564318/D44434D1C56BA4A590591606A3A50EE4C9F607B8/",
+        date = "2021-07-23",
     },
     ust = {
         pack = {
@@ -145,55 +163,67 @@ local setImages = {
             "https://steamusercontent-a.akamaihd.net/ugc/1869553610271665770/97276A7B7774EF057E915B9A0AB9AC3F81221ED2/",
         },
         name = "Unstable",
+        date = "2017-12-08",
     },
     ugl = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1869553610271718076/9F874EFF82054749352677189F63683DC038A17E/",
         name = "Unglued",
+        date = "1998-08-11",
     },
     unh = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1869553610271611558/564F7D6B23A479883C84C4F5D90852CD4C056E9A/",
         name = "Unhinged",
+        date = "2024-11-19",
     },
     vow = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/2027238089146067515/FB7A98B9B0BE5C25098F63981C6C12BBE1036BA6/",
-        name = "Inistrad Crimson VOW",
+        name = "Inistrad: Crimson Vow",
+        date = "2021-11-19",
     },
     uma = {
         pack = "https://i.imgur.com/4RylXgU.png",
         name = "Ultimate Masters",
+        date = "2018-12-07",
     },
     cmm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/2093668098031059945/BF91A05DA4A788ED5F5C01B05305F3E4ECE8CE52/",
         name = "Commander Masters",
+        date = "2023-08-04",
     },
     mma = {
         pack = "https://i.imgur.com/CU7EL6h.png",
         name = "Modern Masters",
+        date = "2013-06-07",
     },
     twoxm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/2027238089151521799/52EC298FBB89EA2A24DA024981161F96E3522645/",
         name = "Double Masters",
-        code = "2XM"
+        date = "2020-08-07",
     },
     sok = {
         pack = "https://i.imgur.com/ctFTHkw.jpg",
         name = "Saviors of Kamigawa",
+        date = "2005-06-03",
     },
     neo = {
         pack = "https://i.imgur.com/5FcGpqC.png",
         name = "Kamigawa: Neon Dynasty",
+        date = "2022-02-18",
     },
     bok = {
         pack = "https://i.imgur.com/t6UP7lt.jpg",
         name = "Betrayers of Kamigawa",
+        date = "2025-02-04",
     },
     chk = {
         pack = "https://i.imgur.com/E7IW8Tv.jpg",
         name = "Champions of Kamigawa",
+        date = "2024-10-01",
     },
     spm = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/11967831829609287872/6D168435BEFB1C1EE50A4F0B286BF4D8D9FEA7C8/",
         name = "Marvel's Spider-Man",
+        date = "2025-09-26",
     },
 }
 
@@ -201,6 +231,10 @@ local setCodeMapping = {
     ['2xm'] = 'twoxm',
     ['???'] = 'empty',
 }
+local reverseSetCodeMapping = {}
+for k, v in pairs(setCodeMapping) do
+    reverseSetCodeMapping[v] = k
+end
 
 function onObjectLeaveContainer(container, leaveObject)
     if container ~= self then
@@ -224,12 +258,27 @@ function onObjectLeaveContainer(container, leaveObject)
         rotation = { 0, 0, 0 },
         width = 1000,
         height = 200,
-        font_size = 100,
+        font_size = #setCode <= 3 and 130 or 100,
+        color = { 0, 0, 0, 95 },
+        font_color = { 1, 1, 1, 95 },
+    })
+
+    leaveObject.createButton({
+        label = "remaining: " .. #urls,
+        click_function = 'null',
+        function_owner = self,
+        position = { 0, 0.2, 1.6 },
+        rotation = { 0, 0, 0 },
+        width = 1000,
+        height = 200,
+        font_size = 130,
         color = { 0, 0, 0, 95 },
         font_color = { 1, 1, 1, 95 },
     })
 
     local packImage = getPackImage(setCode)
+
+    leaveObject.setLuaScript(packLua)
 
     leaveObject.setCustomObject({
         diffuse = packImage
@@ -297,14 +346,10 @@ function drawBox()
             rotation = { 0, 0, 0 },
             width = 1000,
             height = 200,
-            font_size = 150,
+            font_size = #setCode <= 3 and 130 or 100,
             color = { 0, 0, 0, 95 },
             font_color = { 1, 1, 1, 95 },
         })
-
-        if #setCode > 3 then
-            self.editButton({ index = 0, font_size = 150 })
-        end
     end
 end
 
@@ -315,20 +360,29 @@ function onLoad()
 end
 
 function spawnSupportedPacks()
-    local sets = {}
-    for code, _ in pairs(setImages) do
-        table.insert(sets, code)
+    local setCodes = {}
+    for setCode, data in pairs(setImages) do
+        table.insert(setCodes, {code = setCode, date = data.date or ""})
     end
-    table.sort(sets)
+
+    table.sort(setCodes, function(a, b)
+        if a.date == "" then return false end
+        if b.date == "" then return true end
+        return a.date < b.date
+    end)
 
     local startPos = self.getPosition() + Vector(3, 0, 0)
     local cols = 10
     local spacingX = 3
     local spacingY = 5
 
-    for index, code in ipairs(sets) do
+    for index, entry in ipairs(setCodes) do
+        local setCode = entry.code
+        local data = setImages[setCode]
+
         local row = math.floor((index - 1) / cols)
         local col = (index - 1) % cols
+
         local copy = self.clone({
             position = {
                 x = startPos.x + col * spacingX,
@@ -337,7 +391,12 @@ function spawnSupportedPacks()
             },
             snap_to_grid = false,
         })
-        copy.setDescription("SET: " .. string.upper(code))
+
+        local lowerSetCode = string.lower(setCode)
+        local mappedSetCode = reverseSetCodeMapping[lowerSetCode] or lowerSetCode
+
+        copy.setName(data.name .. " Boosters")
+        copy.setDescription("SET: " .. string.upper(mappedSetCode) .. "\nRelease Date: "..data.date)
     end
 end
 
@@ -527,14 +586,15 @@ BoosterPacks.spm = function()
     local urls = {}
     local url = config.apiBaseURL .. 's:spm+'
     table.insert(urls, url .. 't:basic')
-    for i = 1, 6 do
-        table.insert(urls, url .. 'r:common')
+    for c in ('wubrg'):gmatch('.') do
+        table.insert(urls, url .. 'r:common+c>=' .. c)
     end
+    table.insert(urls, url .. 'r:common')
     for i = 1, 3 do
         table.insert(urls, url .. 'r:uncommon')
     end
-    table.insert(urls, url .. getRandomRarity(big, 1))
-    table.insert(urls, url .. getRandomRarity(8, 3, 1))
+    table.insert(urls, url .. getRandomRarity(8, 1))
+    table.insert(urls, url .. getRandomRarity(big, 3, 1))
     table.insert(urls, url .. getRandomRarity(big, 30, 3))
     table.insert(urls, url .. getRandomRarity(big, 300, big))
     return urls
@@ -688,13 +748,13 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
             requestsCompleted = requestsCompleted + 1
 
             local remaining = requestsPending - requestsCompleted
-            local label = "Generating " .. setCode .. " (" .. (remaining + 1) .. ")"
+            local label = "remaining: " .. (remaining + 1)
             if attempts > 0 then
-                label = "Deduping " .. setCode .. " (" .. (attempts + 1) .. ": " .. (remaining + 1) .. ")"
+                label = "deduping: " .. (attempts + 1) .. ": " .. (remaining + 1)
             end
             if leaveObject then
                 leaveObject.editButton({
-                    index = 0,
+                    index = 1,
                     label = label,
                 })
             end

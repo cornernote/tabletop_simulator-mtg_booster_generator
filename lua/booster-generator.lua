@@ -20,26 +20,26 @@ function onObjectLeaveContainer(container)
     if container ~= self then
         return
     end
-    Wait.time(function()
-        Wait.condition(
-                function()
-                    if container ~= nil then
+    Wait.condition(
+            function()
+                Wait.time(function()
+                    if container then
                         container.destruct()
                     end
-                end,
-                function()
-                    return container ~= nil and container.getQuantity() == 0
-                end
-        )
-    end, 1)
+                end, 1)
+            end,
+            function()
+                return container and container.getQuantity() == 0
+            end
+    )
 end
 ]]
 
 local packLabelLua = [[
 function onLoad()
     self.createButton({
-        label = self.getName() or "",
-        click_function = 'null',
+        label = string.upper(self.getDescription()):match("SET:%s*(%S+)") or self.getName(),
+        click_function = 'noop',
         function_owner = self,
         position = { 0, 0.2, -1.6 },
         rotation = { 0, 0, 0 },
@@ -47,29 +47,33 @@ function onLoad()
         height = 200,
         font_size = 150,
         color = { 0, 0, 0, 95 },
+        hover_color = { 0, 0, 0, 95 },
+        press_color = { 0, 0, 0, 95 },
         font_color = { 1, 1, 1, 95 },
     })
+end
+function noop()
 end
 ]]
 
 local boosterCount = 0
 local boosterDataCache = {}
-local cardStackDescription = ""
 local lastDescription = ""
 local pollInterval = 0.15  -- seconds, limit scryfall API requests to <10/sec
 local timePassed = 0
 local requestQueue = {}
 
-local default = {
+local defaultImages = {
     pack = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/",
     name = "???",
+    date = "1900-01-01",
 }
 
 local setImages = {
-    mystery = {
+    cmb1 = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/1871804141033719694/FE0CC0C11B5ADB27831BAAF0FF37E95852B6F454/",
-        name = "Mystery",
-        date = "",
+        name = "Mystery Booster Playtest Cards 2019",
+        date = "2019-11-07",
     },
     fin = {
         pack = "https://steamusercontent-a.akamaihd.net/ugc/16627771293824374075/C5699273F56C725E5F909A4CF68E0BBB40CB3212/",
@@ -242,8 +246,14 @@ function onObjectLeaveContainer(container, leaveObject)
     end
 
     local setCode = getSetCode()
-
-    leaveObject.setName(setCode .. " Booster")
+    local mappedSetCode = setCodeMapping[string.lower(setCode)] or string.lower(setCode)
+    local setData = setImages[mappedSetCode]
+    if setData then
+        leaveObject.setName(setData.name .. " Booster (" .. setCode .. ")")
+        leaveObject.setDescription("SET: " .. setCode .. "\nRelease Date: " .. setData.date)
+    else
+        leaveObject.setName(setCode .. " Booster")
+    end
     boosterCount = boosterCount + 1
     local currentBoosterID = boosterCount
 
@@ -252,7 +262,7 @@ function onObjectLeaveContainer(container, leaveObject)
 
     leaveObject.createButton({
         label = "generating " .. setCode,
-        click_function = 'null',
+        click_function = "noop",
         function_owner = self,
         position = { 0, 0.2, -1.6 },
         rotation = { 0, 0, 0 },
@@ -260,12 +270,14 @@ function onObjectLeaveContainer(container, leaveObject)
         height = 200,
         font_size = #setCode <= 3 and 130 or 100,
         color = { 0, 0, 0, 95 },
+        hover_color = { 0, 0, 0, 95 },
+        press_color = { 0, 0, 0, 95 },
         font_color = { 1, 1, 1, 95 },
     })
 
     leaveObject.createButton({
         label = "remaining: " .. #urls,
-        click_function = 'null',
+        click_function = "noop",
         function_owner = self,
         position = { 0, 0.2, 1.6 },
         rotation = { 0, 0, 0 },
@@ -273,6 +285,8 @@ function onObjectLeaveContainer(container, leaveObject)
         height = 200,
         font_size = 130,
         color = { 0, 0, 0, 95 },
+        hover_color = { 0, 0, 0, 95 },
+        press_color = { 0, 0, 0, 95 },
         font_color = { 1, 1, 1, 95 },
     })
 
@@ -286,22 +300,22 @@ function onObjectLeaveContainer(container, leaveObject)
 
     Wait.condition(
             function()
-                Wait.condition(
-                        function()
-                            local objectData = leaveObject.getData()
-                            objectData.ContainedObjects = boosterDataCache[currentBoosterID]
-                            leaveObject.destruct()
-                            local generatedBooster = spawnObjectData({ data = objectData })
-                            local packLuaScript = packLua
-                            if packImage == default.pack then
-                                packLuaScript = packLuaScript .. "\n" .. packLabelLua
-                            end
-                            generatedBooster.setLuaScript(packLuaScript)
-                        end,
-                        function()
-                            return leaveObject.resting
-                        end
-                )
+                Wait.condition(function()
+                    if leaveObject == null then
+                        return
+                    end
+                    local objectData = leaveObject.getData()
+                    leaveObject.destruct()
+                    objectData.ContainedObjects = boosterDataCache[currentBoosterID]
+                    local generatedBooster = spawnObjectData({ data = objectData })
+                    local packLuaScript = packLua
+                    if packImage == defaultImages.pack then
+                        packLuaScript = packLuaScript .. "\n" .. packLabelLua
+                    end
+                    generatedBooster.setLuaScript(packLuaScript)
+                end, function()
+                    return leaveObject == null or leaveObject.resting
+                end)
             end,
             function()
                 return boosterDataCache[currentBoosterID] ~= nil
@@ -321,7 +335,7 @@ function getPackImage(setCode)
         end
     end
 
-    return default.pack
+    return defaultImages.pack
 end
 
 function drawBox()
@@ -337,10 +351,10 @@ function drawBox()
         self.reload()
     end
 
-    if packImage == default.pack then
+    if packImage == defaultImages.pack then
         self.createButton({
             label = setCode .. " Boosters",
-            click_function = 'null',
+            click_function = "noop",
             function_owner = self,
             position = { 0, 0.2, -1.6 },
             rotation = { 0, 0, 0 },
@@ -348,6 +362,8 @@ function drawBox()
             height = 200,
             font_size = #setCode <= 3 and 130 or 100,
             color = { 0, 0, 0, 95 },
+            hover_color = { 0, 0, 0, 95 },
+            press_color = { 0, 0, 0, 95 },
             font_color = { 1, 1, 1, 95 },
         })
     end
@@ -362,12 +378,16 @@ end
 function spawnSupportedPacks()
     local setCodes = {}
     for setCode, data in pairs(setImages) do
-        table.insert(setCodes, {code = setCode, date = data.date or ""})
+        table.insert(setCodes, { code = setCode, date = data.date or "" })
     end
 
     table.sort(setCodes, function(a, b)
-        if a.date == "" then return false end
-        if b.date == "" then return true end
+        if a.date == "" then
+            return false
+        end
+        if b.date == "" then
+            return true
+        end
         return a.date < b.date
     end)
 
@@ -395,8 +415,12 @@ function spawnSupportedPacks()
         local lowerSetCode = string.lower(setCode)
         local mappedSetCode = reverseSetCodeMapping[lowerSetCode] or lowerSetCode
 
-        copy.setName(data.name .. " Boosters")
-        copy.setDescription("SET: " .. string.upper(mappedSetCode) .. "\nRelease Date: "..data.date)
+        if setData then
+            copy.setName(data.name .. " Boosters (" .. string.upper(mappedSetCode) .. ")")
+            copy.setDescription("SET: " .. string.upper(mappedSetCode) .. "\nRelease Date: " .. data.date)
+        else
+            copy.setName(string.upper(mappedSetCode) .. " Boosters")
+        end
     end
 end
 
@@ -421,7 +445,7 @@ end
 function getSetCode()
     -- Trim leading/trailing whitespace from the captured text
     -- This makes sure " SET: M15 " becomes "M15"
-    local setCode = string.upper(self.getDescription()):match("SET:%s*(%S+)") or default.name
+    local setCode = string.upper(self.getDescription()):match("SET:%s*(%S+)") or defaultImages.name
 
     if #setCode > 3 then
         setCode = string.lower(setCode):gsub("^%l", string.upper)
@@ -472,10 +496,10 @@ function BoosterPacks.default(set)
 
     table.insert(urls, url .. 't:basic')
     for c in ('wubrg'):gmatch('.') do
-        table.insert(urls, url .. 'r:common+c>=' .. c)
+        table.insert(urls, url .. 'r:common+-t:basic+c>=' .. c)
     end
     for i = 1, 5 do
-        table.insert(urls, url .. 'r:common+')
+        table.insert(urls, url .. 'r:common+-t:basic')
     end
     for i = 1, 3 do
         table.insert(urls, url .. 'r:uncommon')
@@ -566,9 +590,9 @@ BoosterPacks.empty = function()
     return {}
 end
 
-BoosterPacks.mystery = function()
+BoosterPacks.cmb1 = function()
     local urls = {}
-    local urlPrefix = config.apiBaseURL .. 'set:mb1+'
+    local urlPrefix = config.apiBaseURL .. 'set:mb1+' -- seems to load set:plst (The List)
     for _, c in ipairs({ 'w', 'u', 'b', 'r', 'g' }) do
         table.insert(urls, urlPrefix .. 'r<rare+c=' .. c)
         table.insert(urls, urlPrefix .. 'r<rare+c=' .. c)
@@ -587,9 +611,9 @@ BoosterPacks.spm = function()
     local url = config.apiBaseURL .. 's:spm+'
     table.insert(urls, url .. 't:basic')
     for c in ('wubrg'):gmatch('.') do
-        table.insert(urls, url .. 'r:common+c>=' .. c)
+        table.insert(urls, url .. 'r:common+-t:basic+c>=' .. c)
     end
-    table.insert(urls, url .. 'r:common')
+    table.insert(urls, url .. 'r:common+-t:basic')
     for i = 1, 3 do
         table.insert(urls, url .. 'r:uncommon')
     end
@@ -702,7 +726,7 @@ function processRequestQueue()
 end
 
 function getSetUrls(setCode)
-    local lowerSetCode =  string.lower(setCode)
+    local lowerSetCode = string.lower(setCode)
     local mappedSetCode = setCodeMapping[lowerSetCode] or lowerSetCode
     local packGenerator = BoosterPacks[mappedSetCode] or BoosterPacks.default
     return reverseTable(packGenerator(lowerSetCode))
@@ -723,10 +747,9 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
     local setCode = getSetCode()
 
     local deck = existingDeck or {
-        Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 180, rotZ = 180, scaleX = 1, scaleY = 1, scaleZ = 1 },
+        Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 180, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
         Name = "Deck",
         Nickname = setCode .. " Booster",
-        Description = cardStackDescription,
         DeckIDs = {},
         CustomDeck = {},
         ContainedObjects = {},
@@ -759,16 +782,16 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
                 label = "deduping: " .. (attempts + 1) .. ": " .. (remaining + 1)
             end
             if leaveObject then
-                leaveObject.editButton({
-                    index = 1,
-                    label = label,
-                })
+                leaveObject.editButton({ index = 1, label = label })
             end
         end, existingDeck and "start" or "end")
     end
 
     Wait.condition(
             function()
+                if leaveObject == null then
+                    return
+                end
                 local seen, dupes = {}, {}
                 for i, card in ipairs(deck.ContainedObjects) do
                     if card then
@@ -791,7 +814,7 @@ function fetchDeckData(boosterID, urls, leaveObject, attempts, existingDeck, rep
                     end, 0.1)
                 else
                     local boosterContents = {}
-                    if setCode == default.name then
+                    if setCode == defaultImages.name then
                         table.insert(boosterContents, {
                             Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
                             Name = "Notecard",
@@ -916,11 +939,16 @@ end
 function getSupportedSets()
     local packs = {}
 
-    for code, data in pairs(setImages) do
+    for setCode, data in pairs(setImages) do
         if data.pack then
-            table.insert(packs, data.code or string.upper(code))
+            local lowerSetCode = string.lower(setCode)
+            local mappedSetCode = reverseSetCodeMapping[lowerSetCode] or lowerSetCode
+            table.insert(packs, string.upper(mappedSetCode))
         end
     end
 
     return table.concat(packs, ", ")
+end
+
+function noop()
 end

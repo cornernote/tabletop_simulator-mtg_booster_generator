@@ -5,6 +5,74 @@
 -- Most recent script can be found on GitHub:
 -- https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua
 
+-----------------------------------------------------------------------
+-- AutoUpdater - downloads the latest version
+-----------------------------------------------------------------------
+
+local AutoUpdater = {
+    version = "1.4.0",
+    versionUrl = "https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.ver",
+    scriptUrl = "https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua",
+}
+
+AutoUpdater.isNewerVersion = function(remoteVersion)
+    local function split(v)
+        local t = {}
+        for n in v:gmatch("%d+") do
+            table.insert(t, tonumber(n))
+        end
+        return t
+    end
+
+    local r, l = split(remoteVersion), split(AutoUpdater.version)
+    for i = 1, math.max(#r, #l) do
+        local rv, lv = r[i] or 0, l[i] or 0
+        if rv > lv then
+            return true
+        end
+        if rv < lv then
+            return false
+        end
+    end
+    return false
+end
+
+AutoUpdater.checkForUpdate = function()
+    WebRequest.get(AutoUpdater.versionUrl, function(request)
+        if request.response_code ~= 200 then
+            print("Failed to fetch version: " .. request.error)
+            return
+        end
+        local remoteVersion = request.text:match("[^\r\n]+") or ""
+        if remoteVersion ~= "" and AutoUpdater.isNewerVersion(remoteVersion) then
+            print("New version available: " .. remoteVersion .. " (local: " .. AutoUpdater.version .. ")")
+            AutoUpdater.fetchNewScript(remoteVersion)
+        else
+            print("No update needed. Current version: " .. AutoUpdater.version)
+        end
+    end)
+end
+
+AutoUpdater.fetchNewScript = function(newVersion)
+    WebRequest.get(AutoUpdater.scriptUrl, function(request)
+        if request.response_code ~= 200 then
+            print("Failed to fetch script: " .. request.error)
+            return
+        end
+        if request.text and #request.text > 0 then
+            self.setLuaScript(request.text)
+            self.reload()
+            print("Updated script to version " .. newVersion)
+        else
+            print("Fetched script is empty, update aborted")
+        end
+    end)
+end
+
+-----------------------------------------------------------------------
+-- Local configuration and data
+-----------------------------------------------------------------------
+
 local config = {
     backURL = 'https://steamusercontent-a.akamaihd.net/ugc/1647720103762682461/35EF6E87970E2A5D6581E7D96A99F8A575B7A15F/',
     apiBaseURL = 'http://api.scryfall.com/cards/random?q=',
@@ -857,6 +925,7 @@ function onLoad()
     if data.setCode == config.defaultSetCode then
         self.addContextMenuItem("Spawn Boxes", spawnSupportedPacks)
     end
+    AutoUpdater.checkForUpdate()
 end
 
 function onUpdate()

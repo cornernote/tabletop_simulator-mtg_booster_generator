@@ -11,8 +11,8 @@
 
 local AutoUpdater = {
     version = "1.4.1",
-    versionUrl = "https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.ver",
-    scriptUrl = "https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua",
+    versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
+    scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
 }
 
 AutoUpdater.isNewerVersion = function(remoteVersion)

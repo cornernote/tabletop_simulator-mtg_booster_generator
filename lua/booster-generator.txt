@@ -1,4 +1,4 @@
-[FFDA00]ANY[cccccc] MTG Booster Box v1.6[ffffff]
+[FFDA00]ANY[cccccc] MTG Booster Box[ffffff]
 
 SET: ???
 

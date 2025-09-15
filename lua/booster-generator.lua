@@ -11,7 +11,7 @@
 
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.4.2",
+    version = "1.6.0",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
 }

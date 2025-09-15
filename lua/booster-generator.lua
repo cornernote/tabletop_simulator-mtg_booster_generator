@@ -911,7 +911,9 @@ function onLoad()
     if data.setCode == config.defaultSetCode then
         self.addContextMenuItem("Spawn Boxes", spawnSupportedPacks)
     end
-    AutoUpdater.checkForUpdate()
+
+    AutoUpdater.host = self
+    AutoUpdater:checkForUpdate()
 end
 
 function onUpdate()

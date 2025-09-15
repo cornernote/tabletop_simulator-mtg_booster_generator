@@ -2,5 +2,9 @@
 
 SET: ???
 
+Replace ??? with the set code, then pull a random booster from that set.
+
+Open a "???" booster to get supported sets.
+
 ----------
 https://steamcommunity.com/sharedfiles/filedetails/?id=3558729769

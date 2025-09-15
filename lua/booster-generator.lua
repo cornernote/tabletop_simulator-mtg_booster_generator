@@ -33,24 +33,79 @@ function onObjectLeaveContainer(container)
             end
     )
 end
-]]
-
-local packLabelLua = [[
 function onLoad()
-    self.createButton({
-        label = string.upper(self.getDescription()):match("SET:%s*(%S+)") or self.getName(),
-        click_function = 'noop',
-        function_owner = self,
-        position = { 0, 0.2, -1.6 },
-        rotation = { 0, 0, 0 },
-        width = 1000,
-        height = 200,
-        font_size = 150,
-        color = { 0, 0, 0, 95 },
-        hover_color = { 0, 0, 0, 95 },
-        press_color = { 0, 0, 0, 95 },
-        font_color = { 1, 1, 1, 95 },
-    })
+    if self.getCustomObject().diffuse == "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/" then
+        self.createButton({
+            label = (string.upper(self.getDescription()):match("SET:%s*(%S+)") .. " Booster") or self.getName(),
+            click_function = 'noop',
+            function_owner = self,
+            position = { 0, 0.2, -1.6 },
+            rotation = { 0, 0, 0 },
+            width = 1000,
+            height = 200,
+            font_size = 150,
+            color = { 0, 0, 0, 95 },
+            hover_color = { 0, 0, 0, 95 },
+            press_color = { 0, 0, 0, 95 },
+            font_color = { 1, 1, 1, 95 },
+        })
+    end
+    if #self.getObjects() > 0 then
+        self.createButton({
+            label = "Lay Out",
+            click_function = "layOutDeck",
+            function_owner = self,
+            position = { 0, 0.2, 0 },
+            rotation = { 0, 0, 0 },
+            width = 1000,
+            height = 200,
+            font_size = 150,
+            color = { 0, 0, 0, 95 },
+            font_color = { 1, 1, 1, 95 },
+        })
+    end
+end
+function layOutDeck(obj, playerColor)
+    local contained = self.getObjects()
+    if #contained == 0 then
+        return
+    end
+    local entryGuid = contained[1].guid
+    local takePos = self.getPosition() + Vector(0, 2, 0)
+    local deckObj = self.takeObject({ guid = entryGuid, position = takePos, smooth = false })
+    if not deckObj then
+        return
+    end
+    Wait.time(function() spreadDeck(deckObj) end, 0.1)
+end
+
+function spreadDeck(deckObj)
+    if not deckObj then return end
+    local startPos = self.getPosition() + Vector(-2.3*2, 2, 3.2)
+    local colCount = 5
+    local spacingX = 2.3
+    local spacingZ = 3.2
+    local total = 1
+    if deckObj.tag == "Deck" then
+        local objs = deckObj.getObjects()
+        total = #objs
+    else
+        total = 1
+    end
+    for i = 1, total do
+        local row = math.floor((i-1) / colCount)
+        local col = (i-1) % colCount
+        local pos = startPos + Vector(col * spacingX, 2, -row * spacingZ)
+        if deckObj.tag == "Deck" then
+            deckObj.takeObject({ position = pos, smooth = false })
+        elseif deckObj.tag == "Card" then
+            deckObj.setPositionSmooth(pos, false, false)
+            deckObj = nil
+        else
+            break
+        end
+    end
+    self.destruct()
 end
 function noop()
 end
@@ -313,11 +368,7 @@ function onObjectLeaveContainer(container, leaveObject)
                     leaveObject.destruct()
                     objectData.ContainedObjects = boosterDataCache[currentBoosterID]
                     local generatedBooster = spawnObjectData({ data = objectData })
-                    local packLuaScript = packLua
-                    if packImage == defaultImages.pack then
-                        packLuaScript = packLuaScript .. "\n" .. packLabelLua
-                    end
-                    generatedBooster.setLuaScript(packLuaScript)
+                    generatedBooster.setLuaScript(packLua)
                 end, function()
                     return leaveObject == null or leaveObject.resting
                 end)
@@ -402,7 +453,7 @@ function spawnSupportedPacks()
     local startPos = self.getPosition() + Vector(3, 0, 0)
     local cols = 10
     local spacingX = 3
-    local spacingY = 5
+    local spacingZ = 5
 
     for index, entry in ipairs(setCodes) do
         local setCode = entry.code
@@ -415,7 +466,7 @@ function spawnSupportedPacks()
             position = {
                 x = startPos.x + col * spacingX,
                 y = startPos.y,
-                z = startPos.z - row * spacingY
+                z = startPos.z - row * spacingZ
             },
             snap_to_grid = false,
         })

@@ -10,7 +10,8 @@
 -----------------------------------------------------------------------
 
 local AutoUpdater = {
-    version = "1.4.1",
+    name = "Any MTG Booster Generator",
+    version = "1.4.2",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
 }
@@ -40,15 +41,11 @@ end
 AutoUpdater.checkForUpdate = function()
     WebRequest.get(AutoUpdater.versionUrl, function(request)
         if request.response_code ~= 200 then
-            print("Failed to fetch version: " .. request.error)
             return
         end
         local remoteVersion = request.text:match("[^\r\n]+") or ""
         if remoteVersion ~= "" and AutoUpdater.isNewerVersion(remoteVersion) then
-            print("New version available: " .. remoteVersion .. " (local: " .. AutoUpdater.version .. ")")
             AutoUpdater.fetchNewScript(remoteVersion)
-        else
-            print("No update needed. Current version: " .. AutoUpdater.version)
         end
     end)
 end
@@ -56,15 +53,12 @@ end
 AutoUpdater.fetchNewScript = function(newVersion)
     WebRequest.get(AutoUpdater.scriptUrl, function(request)
         if request.response_code ~= 200 then
-            print("Failed to fetch script: " .. request.error)
             return
         end
         if request.text and #request.text > 0 then
             self.setLuaScript(request.text)
             self.reload()
-            print("Updated script to version " .. newVersion)
-        else
-            print("Fetched script is empty, update aborted")
+            print(AutoUpdater.name .. ": Updated script to version " .. newVersion)
         end
     end)
 end
@@ -280,18 +274,14 @@ end
 
 BoosterUrls.default16CardPack = function(set)
     local urls = BoosterUrls.basePackUrls(set, true, 3)
-    print(#urls)
     for i = 1, 3 do
         table.insert(urls, config.apiBaseURL .. 's:' .. set .. '+' .. 'r:u')
     end
-    print(#urls)
     table.insert(urls, config.apiBaseURL .. 's:' .. set .. '+' .. BoosterUrls.randomRarity(800, 30, 3))
     table.insert(urls, config.apiBaseURL .. 's:' .. set .. '+' .. BoosterUrls.randomRarity(80, 3, 1))
-    print(#urls)
     for i = 1, 2 do
         table.insert(urls, config.apiBaseURL .. 's:' .. set .. '+' .. BoosterUrls.randomRarity(8, 1))
     end
-    print(#urls)
     BoosterUrls.chooseMasterpieceReplacement(set, urls)
     return urls
 end

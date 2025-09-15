@@ -1,16 +1,16 @@
--- Any MTG Booster Generator by CoRNeRNoTe
--- Any MTG Booster Generator by CoRNeRNoTe
--- Generate any (well, many) boosters.
-
--- Most recent script can be found on GitHub:
--- https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua
+--[[
+=======================================================================
+== Any MTG Booster Generator by CoRNeRNoTe
+== Generate any (well, many) boosters.
+=======================================================================
+]]--
 
 -----------------------------------------------------------------------
 -- AutoUpdater - downloads the latest version
 -----------------------------------------------------------------------
 
 local AutoUpdater = {
-    version = "1.4.0",
+    version = "1.4.1",
     versionUrl = "https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.ver",
     scriptUrl = "https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua",
 }

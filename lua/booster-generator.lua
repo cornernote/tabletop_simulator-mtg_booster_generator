@@ -196,7 +196,7 @@ end
 ]]
 
 -----------------------------------------------------------------------
--- BoosterUrls - builds URL lists for each set type
+-- BoosterUrls - builds URL lists for set types
 -----------------------------------------------------------------------
 
 BoosterUrls = { }

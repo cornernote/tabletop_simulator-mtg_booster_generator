@@ -1,8 +1,13 @@
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.2",
+    version = "1.6.3",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
+
+    run = function(self, host)
+        self.host = host
+        self:checkForUpdate()
+    end,
 
     isNewerVersion = function(self, remoteVersion)
         local function split(v)
@@ -911,8 +916,7 @@ function onLoad()
         self.addContextMenuItem("Spawn Boxes", spawnSupportedPacks)
     end
 
-    AutoUpdater.host = self
-    AutoUpdater:checkForUpdate()
+    AutoUpdater:run(self)
 end
 
 function onUpdate()

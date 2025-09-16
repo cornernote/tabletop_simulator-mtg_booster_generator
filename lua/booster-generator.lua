@@ -1,10 +1,3 @@
---[[
-=======================================================================
-== Any MTG Booster Generator by CoRNeRNoTe
-== Generate any (well, many) boosters.
-=======================================================================
-]]--
-
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
     version = "1.6.2",

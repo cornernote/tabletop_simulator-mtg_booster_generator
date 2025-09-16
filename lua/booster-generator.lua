@@ -7,7 +7,7 @@
 
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.1",
+    version = "1.6.2",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
 
@@ -40,8 +40,14 @@ local AutoUpdater = {
             end
             if request.text and #request.text > 0 then
                 self.host.setLuaScript(request.text)
-                self.host.reload()
                 print(self.name .. ": Updated to version " .. newVersion)
+                Wait.condition(function()
+                    if self.host then
+                        self.host.reload()
+                    end
+                end, function()
+                    return not self.host or self.host.resting
+                end)
             end
         end)
     end,

@@ -1,6 +1,6 @@
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.6",
+    version = "1.6.7",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,
@@ -636,23 +636,26 @@ end
 -----------------------------------------------------------------------
 
 setDefinitions = {
-    CMB1 = {
-        packImage = "https://steamusercontent-a.akamaihd.net/ugc/1871804141033719694/FE0CC0C11B5ADB27831BAAF0FF37E95852B6F454/",
-        name = "Mystery Booster Playtest Cards 2019",
-        date = "2019-11-07",
+    TLA = {
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/18426860329109062848/8608CEB001CF861FC4A6AEB7DEFC99036DDCBC03/",
+        name = "Avatar: The Last Airbender",
+        date = "2025-11-21",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    SPM = {
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/11967831829609287872/6D168435BEFB1C1EE50A4F0B286BF4D8D9FEA7C8/",
+        name = "Marvel's Spider-Man",
+        date = "2025-09-26",
         getUrls = function(set)
-            local urls = {}
-            local url = config.apiBaseURL .. 's:mb1+' -- seems to load s:plst (The List)
-            for c in ('wubrg'):gmatch('.') do
-                table.insert(urls, url .. 'r<r+c=' .. c)
-                table.insert(urls, url .. 'r<r+c=' .. c)
-            end
-            table.insert(urls, url .. 'c:m+r<r')
-            table.insert(urls, url .. 'c:c+r<r')
-            table.insert(urls, url .. 'r>=r+frame:2015')
-            table.insert(urls, url .. 'r>=r+-frame:2015')
-            table.insert(urls, config.apiBaseURL .. 's:cmb1')
-            return urls
+            return BoosterUrls.default14CardPack({ "SPM", "MAR" })
+        end,
+    },
+    SPMC = {
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/14447519524209323137/A7BC08D5AFE8EB8953D3E6F767C7259CDDAAEB34/",
+        name = "Marvel's Spider-Man Collector",
+        date = "2025-09-26",
+        getUrls = function(set)
+            return BoosterUrls.default15CardPack({ "SPM", "MAR", "SPE" })
         end,
     },
     FIN = {
@@ -671,6 +674,22 @@ setDefinitions = {
             return BoosterUrls.default15CardPack({ "FIN", "FCA", "FIC" })
         end,
     },
+    BOK = {
+        packImage = "https://i.imgur.com/t6UP7lt.jpg",
+        name = "Betrayers of Kamigawa",
+        date = "2025-02-04",
+        getUrls = function(set)
+            local urls = BoosterUrls.swapLandForCommon(BoosterUrls.default15CardPack(set))
+            urls[15] = urls[15]:gsub("r:m", "r:r")
+            return urls
+        end,
+    },
+    CHK = {
+        packImage = "https://i.imgur.com/E7IW8Tv.jpg",
+        name = "Champions of Kamigawa",
+        date = "2024-10-01",
+    },
+
     INR = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/33314777894966905/8D9807FCC410A72E23B650DD45417ADE665B4E87/",
         name = "Innistrad Remaster",
@@ -784,6 +803,25 @@ setDefinitions = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/1734441262522564318/D44434D1C56BA4A590591606A3A50EE4C9F607B8/",
         date = "2021-07-23",
     },
+    CMB1 = {
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/1871804141033719694/FE0CC0C11B5ADB27831BAAF0FF37E95852B6F454/",
+        name = "Mystery Booster Playtest Cards 2019",
+        date = "2019-11-07",
+        getUrls = function(set)
+            local urls = {}
+            local url = config.apiBaseURL .. 's:mb1+' -- seems to load s:plst (The List)
+            for c in ('wubrg'):gmatch('.') do
+                table.insert(urls, url .. 'r<r+c=' .. c)
+                table.insert(urls, url .. 'r<r+c=' .. c)
+            end
+            table.insert(urls, url .. 'c:m+r<r')
+            table.insert(urls, url .. 'c:c+r<r')
+            table.insert(urls, url .. 'r>=r+frame:2015')
+            table.insert(urls, url .. 'r>=r+-frame:2015')
+            table.insert(urls, config.apiBaseURL .. 's:cmb1')
+            return urls
+        end,
+    },
     UST = {
         packImage = {
             "https://steamusercontent-a.akamaihd.net/ugc/1869553886384090159/B009BD275EAA4E4D327CABF6E9C287FCF974CAE0/",
@@ -839,33 +877,6 @@ setDefinitions = {
         packImage = "https://i.imgur.com/5FcGpqC.png",
         name = "Kamigawa: Neon Dynasty",
         date = "2022-02-18",
-    },
-    BOK = {
-        packImage = "https://i.imgur.com/t6UP7lt.jpg",
-        name = "Betrayers of Kamigawa",
-        date = "2025-02-04",
-        getUrls = function(set)
-            local urls = BoosterUrls.swapLandForCommon(BoosterUrls.default15CardPack(set))
-            urls[15] = urls[15]:gsub("r:m", "r:r")
-            return urls
-        end,
-    },
-    CHK = {
-        packImage = "https://i.imgur.com/E7IW8Tv.jpg",
-        name = "Champions of Kamigawa",
-        date = "2024-10-01",
-    },
-    SPM = {
-        packImage = "https://steamusercontent-a.akamaihd.net/ugc/11967831829609287872/6D168435BEFB1C1EE50A4F0B286BF4D8D9FEA7C8/",
-        name = "Marvel's Spider-Man",
-        date = "2025-09-26",
-        getUrls = BoosterUrls.default14CardPack,
-    },
-    TLA = {
-        packImage = "https://steamusercontent-a.akamaihd.net/ugc/18426860329109062848/8608CEB001CF861FC4A6AEB7DEFC99036DDCBC03/",
-        name = "Avatar: The Last Airbender",
-        date = "2025-11-21",
-        getUrls = BoosterUrls.default14CardPack,
     },
     DOM = {
         name = "Dominaria",

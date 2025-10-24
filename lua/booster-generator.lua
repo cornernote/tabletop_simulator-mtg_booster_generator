@@ -1,6 +1,6 @@
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.8",
+    version = "1.6.9",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,
@@ -646,6 +646,14 @@ setDefinitions = {
         name = "Avatar: The Last Airbender",
         date = "2025-11-21",
         getUrls = BoosterUrls.default14CardPack,
+    },
+    TLAC = {
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/16172442222396970495/9B571ECCFD4A01EE6287BD6BE1F00D38112F1303/",
+        name = "Avatar: The Last Airbender Collector",
+        date = "2025-11-21",
+        getUrls = function(set)
+            return BoosterUrls.default15CardPack({ "TLA", "TLE" })
+        end,
     },
     SPM = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/11967831829609287872/6D168435BEFB1C1EE50A4F0B286BF4D8D9FEA7C8/",

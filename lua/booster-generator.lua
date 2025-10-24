@@ -1,6 +1,6 @@
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.5",
+    version = "1.6.6",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,
@@ -609,6 +609,12 @@ setDefinitions = {
     FIN = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/16627771293824374075/C5699273F56C725E5F909A4CF68E0BBB40CB3212/",
         name = "Final Fantasy",
+        date = "2025-06-13",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    FINC = {
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/18231428835228154057/AC7EDC8FD8B7FA0A87CB5D675E1CA8294AE0AAE3/",
+        name = "Final Fantasy Collector",
         date = "2025-06-13",
         getUrls = BoosterUrls.default14CardPack,
     },

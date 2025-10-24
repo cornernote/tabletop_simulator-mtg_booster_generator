@@ -1,6 +1,6 @@
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.7",
+    version = "1.6.8",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,
@@ -234,12 +234,12 @@ BoosterUrls.chooseMasterpieceReplacement = function(sets, urls)
     for _, set in ipairs(sets) do
         local masterpieceSet = masterpieceSets[set]
         if masterpieceSet and math.random(1, 144) == 1 then
-            urls[#urls] = config.apiBaseURL .. "s:" .. masterpieceSet
+            urls[#urls] = BoosterUrls.makeUrl(BoosterUrls.makeSetQuery(masterpieceSet))
         end
     end
 end
 
-BoosterUrls.buildSetQuery = function(sets)
+BoosterUrls.makeSetQuery = function(sets)
     if type(sets) == "string" then
         sets = { sets }
     end
@@ -258,72 +258,76 @@ BoosterUrls.buildSetQuery = function(sets)
     end
 end
 
+BoosterUrls.makeUrl = function(setQuery, filter)
+    return config.apiBaseURL .. setQuery .. "+" .. filter
+end
+
 BoosterUrls.basePackUrls = function(sets, includeBasics, extraCommons)
     local urls = {}
-    local setQuery = BoosterUrls.buildSetQuery(sets)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
 
     if includeBasics then
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. "t:basic")
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "t:basic"))
     else
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. "r:common+-t:basic")
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "r:common+-t:basic"))
     end
 
     for c in ("wubrg"):gmatch(".") do
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. "r:common+-t:basic+c>=" .. c)
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "r:common+-t:basic+c>=" .. c))
     end
 
     extraCommons = extraCommons or 5
     for i = 1, extraCommons do
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. "r:common+-t:basic")
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "r:common+-t:basic"))
     end
 
     return urls
 end
 
 BoosterUrls.default14CardPack = function(sets)
-    local setQuery = BoosterUrls.buildSetQuery(sets)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
     local urls = BoosterUrls.basePackUrls(sets, true, 1)
 
     for i = 1, 3 do
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+r:u")
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "+r:u"))
     end
 
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(8000, 300, 36))
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(800, 30, 3))
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(80, 3, 1))
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(8, 1))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8000, 300, 36)))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(800, 30, 3)))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(80, 3, 1)))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8, 1)))
 
     BoosterUrls.chooseMasterpieceReplacement(sets, urls)
     return urls
 end
 
 BoosterUrls.default15CardPack = function(sets)
-    local setQuery = BoosterUrls.buildSetQuery(sets)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
     local urls = BoosterUrls.basePackUrls(sets, true, 5)
 
     for i = 1, 3 do
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+r:u")
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "+r:u"))
     end
 
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(8, 1))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8, 1)))
 
     BoosterUrls.chooseMasterpieceReplacement(sets, urls)
     return urls
 end
 
 BoosterUrls.default16CardPack = function(sets)
-    local setQuery = BoosterUrls.buildSetQuery(sets)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
     local urls = BoosterUrls.basePackUrls(sets, true, 3)
 
     for i = 1, 3 do
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+r:u")
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "+r:u"))
     end
 
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(800, 30, 3))
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(80, 3, 1))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(800, 30, 3)))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(80, 3, 1)))
 
     for i = 1, 2 do
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(8, 1))
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8, 1)))
     end
 
     BoosterUrls.chooseMasterpieceReplacement(sets, urls)
@@ -331,18 +335,18 @@ BoosterUrls.default16CardPack = function(sets)
 end
 
 BoosterUrls.default20CardPack = function(sets)
-    local setQuery = BoosterUrls.buildSetQuery(sets)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
     local urls = BoosterUrls.basePackUrls(sets, false, 5)
 
     for i = 1, 5 do
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+r:u")
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "+r:u"))
     end
 
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(800, 30, 3))
-    table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(80, 3, 1))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(800, 30, 3)))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(80, 3, 1)))
 
     for i = 1, 2 do
-        table.insert(urls, config.apiBaseURL .. setQuery .. "+" .. BoosterUrls.randomRarity(8, 1))
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8, 1)))
     end
 
     BoosterUrls.chooseMasterpieceReplacement(sets, urls)
@@ -361,12 +365,13 @@ BoosterUrls.addCardTypeToPack = function(pack, cardType)
     return pack
 end
 
-BoosterUrls.createReplacementSlotPack = function(urls, set, removeQuery, addQuery)
+BoosterUrls.createReplacementSlotPack = function(urls, sets, removeQuery, addQuery)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
     for i, v in pairs(urls) do
         if i ~= 7 then
             urls[i] = v .. removeQuery
         else
-            urls[i] = config.apiBaseURL .. 's:' .. set .. '+' .. BoosterUrlsBoosterUrls.randomRarity() .. addQuery
+            urls[i] = BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity() .. addQuery)
         end
     end
     return urls
@@ -783,18 +788,19 @@ setDefinitions = {
         date = "2021-04-23",
         getUrls = function(set)
             local urls = {}
-            local url = config.apiBaseURL .. 's:stx+'
-            local archiveURL = config.apiBaseURL .. 's:sta+'
-            table.insert(urls, url .. 't:land')
+            local setQuery = BoosterUrls.makeSetQuery('stx')
+            local archiveSetQuery = BoosterUrls.makeSetQuery('sta')
+            local mixedSetQuery = BoosterUrls.makeSetQuery({ 'stx', 'sta' })
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, 't:land'))
             for c in ('wubrg'):gmatch('.') do
-                table.insert(urls, url .. '-t:basic+r<r+c:' .. c)
+                table.insert(urls, BoosterUrls.makeUrl(setQuery, '-t:basic+r<r+c:' .. c))
             end
-            table.insert(urls, url .. '-t:basic+r<r')
-            table.insert(urls, config.apiBaseURL .. '(s:sta+or+s:sta)+-t:basic')
-            table.insert(urls, url .. '-t:basic')
-            table.insert(urls, url .. BoosterUrls.randomRarity(8, 1))
-            table.insert(urls, url .. 't:lesson')
-            table.insert(urls, archiveURL .. 'r>c+' .. (math.random(2) == 1 and 'lang:en' or 'lang:ja'))
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, '-t:basic+r<r'))
+            table.insert(urls, BoosterUrls.makeUrl(mixedSetQuery, '-t:basic'))
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, '-t:basic'))
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8, 1)))
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, 't:lesson'))
+            table.insert(urls, BoosterUrls.makeUrl(archiveSetQuery, 'r>c+' .. (math.random(2) == 1 and 'lang:en' or 'lang:ja')))
             return urls
         end,
     },
@@ -809,16 +815,17 @@ setDefinitions = {
         date = "2019-11-07",
         getUrls = function(set)
             local urls = {}
-            local url = config.apiBaseURL .. 's:mb1+' -- seems to load s:plst (The List)
+            local setQuery = BoosterUrls.makeSetQuery('mb1')
+            local url = BoosterUrls.makeUrl(setQuery, 's:mb1') -- seems to load s:plst (The List)
             for c in ('wubrg'):gmatch('.') do
-                table.insert(urls, url .. 'r<r+c=' .. c)
-                table.insert(urls, url .. 'r<r+c=' .. c)
+                table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r<r+c=' .. c))
+                table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r<r+c=' .. c))
             end
-            table.insert(urls, url .. 'c:m+r<r')
-            table.insert(urls, url .. 'c:c+r<r')
-            table.insert(urls, url .. 'r>=r+frame:2015')
-            table.insert(urls, url .. 'r>=r+-frame:2015')
-            table.insert(urls, config.apiBaseURL .. 's:cmb1')
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, 'c:m+r<r'))
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, 'c:c+r<r'))
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r>=r+frame:2015'))
+            table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r>=r+-frame:2015'))
+            table.insert(urls, BoosterUrls.makeUrl(BoosterUrls.makeSetQuery('cmb1'), ''))
             return urls
         end,
     },

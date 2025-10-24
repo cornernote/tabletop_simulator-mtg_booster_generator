@@ -613,7 +613,7 @@ setDefinitions = {
         getUrls = BoosterUrls.default14CardPack,
     },
     FINC = {
-        packImage = "https://steamusercontent-a.akamaihd.net/ugc/18231428835228154057/AC7EDC8FD8B7FA0A87CB5D675E1CA8294AE0AAE3/",
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/12474440936943111473/5DD973A1A676B0AF1D27C63CB43CE0B91FD45134/",
         name = "Final Fantasy Collector",
         date = "2025-06-13",
         getUrls = BoosterUrls.default14CardPack,

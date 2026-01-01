@@ -1,6 +1,6 @@
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.9",
+    version = "1.6.10",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,
@@ -284,12 +284,26 @@ BoosterUrls.basePackUrls = function(sets, includeBasics, extraCommons)
     return urls
 end
 
+BoosterUrls.alphaCardPack = function(sets)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
+    local urls = BoosterUrls.basePackUrls(sets, true, 10)
+
+    for i = 1, 3 do
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r:u'))
+    end
+
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r:r'))
+
+    BoosterUrls.chooseMasterpieceReplacement(sets, urls)
+    return urls
+end
+
 BoosterUrls.default14CardPack = function(sets)
     local setQuery = BoosterUrls.makeSetQuery(sets)
     local urls = BoosterUrls.basePackUrls(sets, true, 1)
 
     for i = 1, 3 do
-        table.insert(urls, BoosterUrls.makeUrl(setQuery, "+r:u"))
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r:u'))
     end
 
     table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8000, 300, 36)))
@@ -306,7 +320,7 @@ BoosterUrls.default15CardPack = function(sets)
     local urls = BoosterUrls.basePackUrls(sets, true, 5)
 
     for i = 1, 3 do
-        table.insert(urls, BoosterUrls.makeUrl(setQuery, "+r:u"))
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r:u'))
     end
 
     table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8, 1)))
@@ -320,7 +334,7 @@ BoosterUrls.default16CardPack = function(sets)
     local urls = BoosterUrls.basePackUrls(sets, true, 3)
 
     for i = 1, 3 do
-        table.insert(urls, BoosterUrls.makeUrl(setQuery, "+r:u"))
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r:u'))
     end
 
     table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(800, 30, 3)))
@@ -339,7 +353,7 @@ BoosterUrls.default20CardPack = function(sets)
     local urls = BoosterUrls.basePackUrls(sets, false, 5)
 
     for i = 1, 5 do
-        table.insert(urls, BoosterUrls.makeUrl(setQuery, "+r:u"))
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, 'r:u'))
     end
 
     table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(800, 30, 3)))
@@ -702,7 +716,6 @@ setDefinitions = {
         name = "Champions of Kamigawa",
         date = "2024-10-01",
     },
-
     INR = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/33314777894966905/8D9807FCC410A72E23B650DD45417ADE665B4E87/",
         name = "Innistrad Remaster",
@@ -972,6 +985,14 @@ setDefinitions = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/1734441450301159293/A7F7C010D0312D856CD8667678F5732BDB8F6EB2/",
         name = "Kaldheim",
         date = "2021-02-05",
+    },
+    LEA = {
+        name = "Limited Edition Alpha",
+        date = "1993-08-05",
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/11233057164064068203/C3F6F1252903B67720C40A2DBBAE54B3F8F6FD7A/",
+        getUrls = function(set)
+            return BoosterUrls.alphaCardPack(set)
+        end,
     },
 }
 

@@ -434,7 +434,11 @@ PackBuilder.processRequestQueue = function()
         return
     end
     local request = table.remove(data.requestQueue, 1)
-    WebRequest.get(request.url, request.callback)
+    local headers = {
+        ['User-Agent'] = AutoUpdater.name .. '/' .. AutoUpdater.version,
+        ['Accept'] = 'application/json'
+    }
+    WebRequest.custom(request.url, "GET", true, nil, headers, request.callback)
 end
 
 PackBuilder.fetchDeckData = function(boosterID, setCode, urls, leaveObject, attempts, existingDeck, replaceIndices, originalUrls)

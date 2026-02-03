@@ -1,6 +1,6 @@
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.10",
+    version = "1.6.12",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,
@@ -72,7 +72,7 @@ local config = {
     apiBaseURL = 'http://api.scryfall.com/cards/random?q=',
     defaultPackImage = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/", -- same url used in packLua
     defaultSetCode = "???", -- same setCode used in packLua
-    pollInterval = 0.2,
+    pollInterval = 0.25,
 }
 
 local data = {
@@ -267,7 +267,7 @@ BoosterUrls.basePackUrls = function(sets, includeBasics, extraCommons)
     local setQuery = BoosterUrls.makeSetQuery(sets)
 
     if includeBasics then
-        table.insert(urls, BoosterUrls.makeUrl(setQuery, "t:basic"))
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "t:basic+unique:prints"))
     else
         table.insert(urls, BoosterUrls.makeUrl(setQuery, "r:common+-t:basic"))
     end
@@ -379,8 +379,9 @@ BoosterUrls.addCardTypeToPack = function(pack, cardType)
     return pack
 end
 
-BoosterUrls.createReplacementSlotPack = function(urls, sets, removeQuery, addQuery)
+BoosterUrls.createReplacementSlotPack = function(urls, sets, removeQuery, addQuery, slotIndex)
     local setQuery = BoosterUrls.makeSetQuery(sets)
+    slotIndex = slotIndex or 1
     for i, v in pairs(urls) do
         if i ~= 7 then
             urls[i] = v .. removeQuery
@@ -935,54 +936,56 @@ setDefinitions = {
         name = "Conspiracy",
         date = "2014-06-06",
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-wm:conspiracy', '+wm:conspiracy')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-wm:conspiracy', '+wm:conspiracy', 7)
         end,
     },
     CN2 = {
         name = "Conspiracy: Take the Crown",
         date = "2016-08-26",
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-wm:conspiracy', '+wm:conspiracy')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-wm:conspiracy', '+wm:conspiracy', 7)
         end,
     },
     ISD = {
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform', 7)
         end,
     },
     DKA = {
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform', 7)
         end,
     },
     SOI = {
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform', 7)
         end,
     },
     EMN = {
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform', 7)
         end,
     },
     ICE = {
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow+unique:prints')
         end,
     },
     ALL = {
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow+unique:prints')
         end,
     },
     CSP = {
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow')
+            local urls = BoosterUrls.default15CardPack(set)
+            urls[15] = urls[15]:gsub('r:m', 'r:r')
+            return BoosterUrls.createReplacementSlotPack(urls, set, '', 't:basic+t:snow+unique:prints')
         end,
     },
     MH1 = {
         getUrls = function(set)
-            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow')
+            return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow+unique:prints')
         end,
     },
     KHM = {

@@ -170,6 +170,21 @@ BoosterUrls.default20CardPack = function(sets)
     return urls
 end
 
+BoosterUrls.beyondBooster = function(sets)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
+    local urls = {}
+
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, "t:basic"))
+    for i = 1, 3 do
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "r:u+-is:boosterfun"))
+    end
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8, 1)))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, "r>=u+is:foil"))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, "r>=u+is:boosterfun"))
+
+    return urls
+end
+
 BoosterUrls.addCardTypeToPack = function(pack, cardType)
     local randomIndex = math.random(#pack - 1, #pack)
     for i = 13, #pack do

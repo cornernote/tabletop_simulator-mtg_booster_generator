@@ -25,9 +25,9 @@ Perfect for limited formats like Draft, Sealed, or Cube!
 
 ## 📦 Supported Models
 
-Almost all sets are supported.  The following have custom models:
+Almost all sets are supported.  The following have custom pack images:
 
-- MYSTERY, FIN, INR, DFT, EOE, TDM, FDN, DSK, BLB, MH3, MKM, OTJ, RVR, XML, KHM, MID, STX, AFR, UST, UGL, UNH, VOW, UMA, CMM, MMA, 2XM, SOK, NEO, BOK, CHK, SPM
+- TRK, FRA, HOB, MSH, SOS, TMT, ECL, TLA, TLAC, SPM, SPMC, OM1, FIN, FINC, EOE, TDM, DFT, INR, PIO, FDN, J25, DSK, BLB, MB2, ACR, MH3, BIG, OTJ, CLU, MKM, RVR, XLN, MID, STX, AFR, CMB1, UST, UGL, UNH, VOW, UMA, CMM, MMA, 2XM, SOK, NEO, KHM, LEA, BOK, CHK, DOM, WAR, ZNR, CNS, CN2, ISD, DKA, SOI, EMN, ICE, ALL, CSP, MH1
 
 ---
 

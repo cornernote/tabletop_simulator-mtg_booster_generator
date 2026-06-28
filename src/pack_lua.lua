@@ -3,7 +3,7 @@ local packLua = [[
 -- Most recent script can be found on GitHub:
 -- https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua
 local defaultSetCode = "???"
-local defaultPack = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/"
+local defaultPack = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/---_pack.png"
 function tryObjectEnter()
     return false
 end
@@ -79,20 +79,30 @@ function spreadDeck(deck)
     local colCount = 5
     local spacingX = 2.3
     local spacingZ = 3.2
-    local total = 1
+    local entries = {}
     if deck.tag == "Deck" then
-        total = deck.getQuantity()
+        entries = deck.getObjects()
+    else
+        entries = { {} }
     end
-    for index = 1, total do
+    for index, entry in ipairs(entries) do
         Wait.time(function()
             local row = math.floor((index - 1) / colCount)
             local col = (index - 1) % colCount
             local pos = startPos + Vector(col * spacingX, 2, -row * spacingZ)
             if deck.tag == "Deck" then
-                local card = deck.takeObject({ position = pos, smooth = true })
-                Wait.time(function()
-                    card.setScale({ 1, 1, 1 })
-                end, 0.05)
+                local takeParams = { position = pos, smooth = true }
+                if entry.guid then
+                    takeParams.guid = entry.guid
+                end
+                local card = deck.takeObject(takeParams)
+                if card then
+                    Wait.time(function()
+                        if card ~= null then
+                            card.setScale({ 1, 1, 1 })
+                        end
+                    end, 0.05)
+                end
                 if deck.remainder then
                     deck = deck.remainder
                     deck.setLock(true)

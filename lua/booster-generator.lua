@@ -277,7 +277,55 @@ __bundle_register("set_definitions", function(require, _LOADED, __bundle_registe
 -- SetDefinitions - defines the booster set name, contents, etc
 -----------------------------------------------------------------------
 
+local PACK_IMAGE_BASE_URL = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/"
+
+local function packImage(code, variant)
+    local lowerCode = string.lower(code)
+    if lowerCode == "---" then
+        return PACK_IMAGE_BASE_URL .. "---_pack.png"
+    end
+    if variant then
+        return PACK_IMAGE_BASE_URL .. lowerCode .. "-pack-" .. variant .. ".png"
+    end
+    return PACK_IMAGE_BASE_URL .. lowerCode .. "-pack.png"
+end
+
 setDefinitions = {
+    TRK = {
+        name = "Star Trek",
+        date = "2026-11-13",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    FRA = {
+        name = "Reality Fracture",
+        date = "2026-10-02",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    HOB = {
+        name = "The Hobbit",
+        date = "2026-08-14",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    MSH = {
+        name = "Marvel Super Heroes",
+        date = "2026-06-26",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    SOS = {
+        name = "Secrets of Strixhaven",
+        date = "2026-04-24",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    TMT = {
+        name = "Teenage Mutant Ninja Turtles",
+        date = "2026-03-06",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    ECL = {
+        name = "Lorwyn Eclipsed",
+        date = "2026-01-23",
+        getUrls = BoosterUrls.default14CardPack,
+    },
     TLA = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/18426860329109062848/8608CEB001CF861FC4A6AEB7DEFC99036DDCBC03/",
         name = "Avatar: The Last Airbender",
@@ -308,6 +356,11 @@ setDefinitions = {
             return BoosterUrls.default15CardPack({ "SPM", "MAR", "SPE" })
         end,
     },
+    OM1 = {
+        name = "Through the Omenpaths",
+        date = "2025-09-23",
+        getUrls = BoosterUrls.default14CardPack,
+    },
     FIN = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/16627771293824374075/C5699273F56C725E5F909A4CF68E0BBB40CB3212/",
         name = "Final Fantasy",
@@ -327,7 +380,7 @@ setDefinitions = {
     BOK = {
         packImage = "https://i.imgur.com/t6UP7lt.jpg",
         name = "Betrayers of Kamigawa",
-        date = "2025-02-04",
+        date = "2005-02-04",
         getUrls = function(set)
             local urls = BoosterUrls.swapLandForCommon(BoosterUrls.default15CardPack(set))
             urls[15] = urls[15]:gsub("r:m", "r:r")
@@ -337,7 +390,12 @@ setDefinitions = {
     CHK = {
         packImage = "https://i.imgur.com/E7IW8Tv.jpg",
         name = "Champions of Kamigawa",
-        date = "2024-10-01",
+        date = "2004-10-01",
+    },
+    PIO = {
+        name = "Pioneer Masters",
+        date = "2024-12-10",
+        getUrls = BoosterUrls.default14CardPack,
     },
     INR = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/33314777894966905/8D9807FCC410A72E23B650DD45417ADE665B4E87/",
@@ -364,10 +422,15 @@ setDefinitions = {
         getUrls = BoosterUrls.default14CardPack,
     },
     FDN = {
-        packImage = "https://steamusercontent-a.akamaihd.net/ugc/33313055666062860/0DFCD530284A8A4EC67CCEA18399BDE9405F3C3C/",
+        packImage = "https://steamusercontent-a.akamaihd.net/ugc/14536525535954915931/8D2F0937D979DC3464C145F62E1D7619309396E8/",
         name = "Foundations",
         date = "2024-11-15",
         getUrls = BoosterUrls.default14CardPack,
+    },
+    J25 = {
+        name = "Foundations Jumpstart",
+        date = "2024-11-15",
+        getUrls = BoosterUrls.default20CardPack,
     },
     DSK = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/33313055666215369/BFD6BBAC0DE7F1F5C810F4FFCA8EF5E50EC8A03E/",
@@ -378,13 +441,28 @@ setDefinitions = {
     BLB = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/33313055666242938/FA118E357C5820C6BF4EC70CAECC88876B22DE41/",
         name = "Bloomburrow",
-        date = "2024-08-12",
+        date = "2024-08-02",
         getUrls = BoosterUrls.default14CardPack,
+    },
+    MB2 = {
+        name = "Mystery Booster 2",
+        date = "2024-08-02",
+        getUrls = BoosterUrls.default15CardPack,
+    },
+    ACR = {
+        name = "Assassin's Creed",
+        date = "2024-07-05",
+        getUrls = BoosterUrls.beyondBooster,
     },
     MH3 = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/33313055666331598/112B58990D8AD19B704448588F6CC34A8BF0E2E9/",
         name = "Modern Horizons III",
         date = "2024-06-14",
+        getUrls = BoosterUrls.default14CardPack,
+    },
+    BIG = {
+        name = "The Big Score",
+        date = "2024-04-19",
         getUrls = BoosterUrls.default14CardPack,
     },
     MKM = {
@@ -406,6 +484,11 @@ setDefinitions = {
         getUrls = function(set)
             return BoosterUrls.swapLandForCommon(BoosterUrls.default14CardPack(set))
         end,
+    },
+    CLU = {
+        name = "Ravnica: Clue Edition",
+        date = "2024-02-23",
+        getUrls = BoosterUrls.default15CardPack,
     },
     XLN = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/861734852198387392/B81155A30E28760116D166987C221F946D37380E/",
@@ -490,11 +573,11 @@ setDefinitions = {
     UNH = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/1869553610271611558/564F7D6B23A479883C84C4F5D90852CD4C056E9A/",
         name = "Unhinged",
-        date = "2024-11-19",
+        date = "2004-11-19",
     },
     VOW = {
         packImage = "https://steamusercontent-a.akamaihd.net/ugc/2027238089146067515/FB7A98B9B0BE5C25098F63981C6C12BBE1036BA6/",
-        name = "Inistrad: Crimson Vow",
+        name = "Innistrad: Crimson Vow",
         date = "2021-11-19",
     },
     UMA = {
@@ -565,36 +648,50 @@ setDefinitions = {
         end,
     },
     ISD = {
+        name = "Innistrad",
+        date = "2011-09-30",
         getUrls = function(set)
             return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform', 7)
         end,
     },
     DKA = {
+        name = "Dark Ascension",
+        date = "2012-02-03",
         getUrls = function(set)
             return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform', 7)
         end,
     },
     SOI = {
+        name = "Shadows over Innistrad",
+        date = "2016-04-08",
         getUrls = function(set)
             return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform', 7)
         end,
     },
     EMN = {
+        name = "Eldritch Moon",
+        date = "2016-07-22",
         getUrls = function(set)
             return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '+-is:transform', '+is:transform', 7)
         end,
     },
     ICE = {
+        name = "Ice Age",
+        date = "1995-06-03",
         getUrls = function(set)
             return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow+unique:prints')
         end,
     },
     ALL = {
+        name = "Alliances",
+        date = "1996-06-10",
         getUrls = function(set)
             return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow+unique:prints')
         end,
     },
     CSP = {
+        name = "Coldsnap",
+        date = "2006-07-21",
         getUrls = function(set)
             local urls = BoosterUrls.default15CardPack(set)
             urls[15] = urls[15]:gsub('r:m', 'r:r')
@@ -602,6 +699,8 @@ setDefinitions = {
         end,
     },
     MH1 = {
+        name = "Modern Horizons",
+        date = "2019-06-14",
         getUrls = function(set)
             return BoosterUrls.createReplacementSlotPack(BoosterUrls.default15CardPack(set), set, '', '+t:basic+t:snow+unique:prints')
         end,
@@ -634,6 +733,28 @@ setDefinitions['2XM'] = {
     name = "Double Masters",
     date = "2020-08-07",
     getUrls = BoosterUrls.default16CardPack,
+}
+
+local generatedPackImageCodes = {
+    "TRK", "FRA", "HOB", "MSH", "SOS", "TMT", "ECL",
+    "TLA", "TLAC", "SPM", "SPMC", "OM1", "FIN", "FINC", "EOE", "TDM", "DFT", "INR",
+    "PIO", "FDN", "J25", "DSK", "BLB", "MB2", "ACR", "MH3", "BIG", "OTJ", "CLU", "MKM", "RVR",
+    "XLN", "MID", "STX", "AFR", "CMB1", "UGL", "UNH", "VOW", "UMA", "CMM", "MMA",
+    "SOK", "NEO", "KHM", "LEA", "2XM", "BOK", "CHK", "DOM", "WAR", "ZNR", "CNS", "CN2",
+    "ISD", "DKA", "SOI", "EMN", "ICE", "ALL", "CSP", "MH1",
+}
+
+for _, code in ipairs(generatedPackImageCodes) do
+    if setDefinitions[code] then
+        setDefinitions[code].packImage = packImage(code)
+    end
+end
+
+setDefinitions['???'].packImage = packImage("---")
+setDefinitions.UST.packImage = {
+    packImage("UST", 1),
+    packImage("UST", 2),
+    packImage("UST", 3),
 }
 
 return setDefinitions
@@ -1948,6 +2069,21 @@ BoosterUrls.default20CardPack = function(sets)
     return urls
 end
 
+BoosterUrls.beyondBooster = function(sets)
+    local setQuery = BoosterUrls.makeSetQuery(sets)
+    local urls = {}
+
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, "t:basic"))
+    for i = 1, 3 do
+        table.insert(urls, BoosterUrls.makeUrl(setQuery, "r:u+-is:boosterfun"))
+    end
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, BoosterUrls.randomRarity(8, 1)))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, "r>=u+is:foil"))
+    table.insert(urls, BoosterUrls.makeUrl(setQuery, "r>=u+is:boosterfun"))
+
+    return urls
+end
+
 BoosterUrls.addCardTypeToPack = function(pack, cardType)
     local randomIndex = math.random(#pack - 1, #pack)
     for i = 13, #pack do
@@ -2003,7 +2139,7 @@ local packLua = [[
 -- Most recent script can be found on GitHub:
 -- https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua
 local defaultSetCode = "???"
-local defaultPack = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/"
+local defaultPack = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/---_pack.png"
 function tryObjectEnter()
     return false
 end
@@ -2079,20 +2215,30 @@ function spreadDeck(deck)
     local colCount = 5
     local spacingX = 2.3
     local spacingZ = 3.2
-    local total = 1
+    local entries = {}
     if deck.tag == "Deck" then
-        total = deck.getQuantity()
+        entries = deck.getObjects()
+    else
+        entries = { {} }
     end
-    for index = 1, total do
+    for index, entry in ipairs(entries) do
         Wait.time(function()
             local row = math.floor((index - 1) / colCount)
             local col = (index - 1) % colCount
             local pos = startPos + Vector(col * spacingX, 2, -row * spacingZ)
             if deck.tag == "Deck" then
-                local card = deck.takeObject({ position = pos, smooth = true })
-                Wait.time(function()
-                    card.setScale({ 1, 1, 1 })
-                end, 0.05)
+                local takeParams = { position = pos, smooth = true }
+                if entry.guid then
+                    takeParams.guid = entry.guid
+                end
+                local card = deck.takeObject(takeParams)
+                if card then
+                    Wait.time(function()
+                        if card ~= null then
+                            card.setScale({ 1, 1, 1 })
+                        end
+                    end, 0.05)
+                end
                 if deck.remainder then
                     deck = deck.remainder
                     deck.setLock(true)
@@ -2140,7 +2286,7 @@ local config = {
     backURL = 'https://steamusercontent-a.akamaihd.net/ugc/1647720103762682461/35EF6E87970E2A5D6581E7D96A99F8A575B7A15F/',
     apiBaseURL = 'https://api.scryfall.com/cards/random?q=',
     searchBaseURL = 'https://api.scryfall.com/cards/search?order=set&unique=prints&q=',
-    defaultPackImage = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/", -- same url used in packLua
+    defaultPackImage = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/---_pack.png", -- same url used in packLua
     defaultSetCode = "???", -- same setCode used in packLua
     pollInterval = 1.2,
     rateLimitDelay = 60,
@@ -2156,7 +2302,7 @@ end)
 __bundle_register("auto_updater", function(require, _LOADED, __bundle_register, __bundle_modules)
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.7.25",
+    version = "1.7.27",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,

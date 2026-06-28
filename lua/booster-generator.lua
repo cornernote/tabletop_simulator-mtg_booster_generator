@@ -1,6 +1,6 @@
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.6.12",
+    version = "1.6.17",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,
@@ -69,16 +69,19 @@ local AutoUpdater = {
 
 local config = {
     backURL = 'https://steamusercontent-a.akamaihd.net/ugc/1647720103762682461/35EF6E87970E2A5D6581E7D96A99F8A575B7A15F/',
-    apiBaseURL = 'http://api.scryfall.com/cards/random?q=',
+    apiBaseURL = 'https://api.scryfall.com/cards/random?q=',
     defaultPackImage = "https://steamusercontent-a.akamaihd.net/ugc/12555777445170015064/1F22F21DA19B1C5D668D761C2CA447889AE98A2A/", -- same url used in packLua
     defaultSetCode = "???", -- same setCode used in packLua
-    pollInterval = 0.25,
+    pollInterval = 0.5,
+    rateLimitDelay = 60,
+    imageLoadDelay = 3,
 }
 
 local data = {
     setCode = "???",
     boosterCount = 0,
     timePassed = 0,
+    rateLimitCooldown = 0,
     lastDescription = "",
     requestQueue = {},
 }
@@ -430,8 +433,16 @@ PackBuilder.enqueueRequest = function(url, callback, position)
     end
 end
 
+PackBuilder.startRateLimitCooldown = function(url, callback, leaveObject)
+    data.rateLimitCooldown = config.rateLimitDelay
+    PackBuilder.enqueueRequest(url, callback, "start")
+    if leaveObject then
+        leaveObject.editButton({ index = 1, label = "waiting: " .. config.rateLimitDelay .. "s" })
+    end
+end
+
 PackBuilder.processRequestQueue = function()
-    if #data.requestQueue == 0 then
+    if #data.requestQueue == 0 or data.rateLimitCooldown > 0 then
         return
     end
     local request = table.remove(data.requestQueue, 1)
@@ -439,7 +450,24 @@ PackBuilder.processRequestQueue = function()
         ['User-Agent'] = AutoUpdater.name .. '/' .. AutoUpdater.version,
         ['Accept'] = 'application/json'
     }
-    WebRequest.custom(request.url, "GET", true, nil, headers, request.callback)
+    WebRequest.custom(request.url, "GET", true, nil, headers, function(response)
+        if PackBuilder.isRateLimitedResponse(response) then
+            PackBuilder.startRateLimitCooldown(request.url, request.callback)
+            return
+        end
+        request.callback(response)
+    end)
+end
+
+PackBuilder.isRateLimitedResponse = function(response)
+    if response.response_code == 429 then
+        return true
+    end
+    if not response.text then
+        return false
+    end
+    local text = response.text:lower()
+    return text:find("rate-limited", 1, true) ~= nil or text:find('"code":"rate_limit"', 1, true) ~= nil
 end
 
 PackBuilder.fetchDeckData = function(boosterID, setCode, urls, leaveObject, attempts, existingDeck, replaceIndices, originalUrls)
@@ -460,7 +488,12 @@ PackBuilder.fetchDeckData = function(boosterID, setCode, urls, leaveObject, atte
 
     for j, url in ipairs(urls) do
         local i = replaceIndices and replaceIndices[j] or j
-        PackBuilder.enqueueRequest(url, function(request)
+        local handleResponse
+        handleResponse = function(request)
+            if PackBuilder.isRateLimitedResponse(request) then
+                PackBuilder.startRateLimitCooldown(url, handleResponse, leaveObject)
+                return
+            end
             if request.response_code == 200 then
                 local cardData = PackBuilder.createCardDataFromJSON(request.text, i)
                 if cardData then
@@ -482,7 +515,8 @@ PackBuilder.fetchDeckData = function(boosterID, setCode, urls, leaveObject, atte
             if leaveObject then
                 leaveObject.editButton({ index = 1, label = label })
             end
-        end, existingDeck and "start" or "end")
+        end
+        PackBuilder.enqueueRequest(url, handleResponse, existingDeck and "start" or "end")
     end
 
     Wait.condition(function()
@@ -564,8 +598,6 @@ PackBuilder.createCardDataFromJSON = function(jsonString, cardIndex)
     end
 
     local cardName, cardOracle, faceURL, backData
-    local imageQuality = 'large'
-    local cacheBuster = (card.image_status ~= 'highres_scan') and ('?' .. os.date("%Y%m%d")) or ""
 
     if card.card_faces then
         if card.image_uris then
@@ -577,13 +609,13 @@ PackBuilder.createCardDataFromJSON = function(jsonString, cardIndex)
                     cardOracle = cardOracle .. '\n'
                 end
             end
-            faceURL = card.image_uris.normal:gsub('%?.*', ''):gsub('normal', imageQuality) .. cacheBuster
+            faceURL = PackBuilder.getImageUrl(card)
         else
             local face, back = card.card_faces[1], card.card_faces[2]
             cardName = PackBuilder.formattedName(face, 'DFC')
             cardOracle = PackBuilder.getCardOracleText(face)
-            faceURL = face.image_uris.normal:gsub('%?.*', ''):gsub('normal', imageQuality) .. cacheBuster
-            local backURL = back.image_uris.normal:gsub('%?.*', ''):gsub('normal', imageQuality) .. cacheBuster
+            faceURL = PackBuilder.getImageUrl(face)
+            local backURL = PackBuilder.getImageUrl(back)
             local backCardIndex = cardIndex + 100
             backData = {
                 Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 0, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
@@ -603,7 +635,7 @@ PackBuilder.createCardDataFromJSON = function(jsonString, cardIndex)
     else
         cardName = PackBuilder.formattedName(card)
         cardOracle = PackBuilder.getCardOracleText(card)
-        faceURL = card.image_uris.normal:gsub('%?.*', ''):gsub('normal', imageQuality) .. cacheBuster
+        faceURL = PackBuilder.getImageUrl(card)
     end
 
     local cardData = {
@@ -625,6 +657,18 @@ PackBuilder.createCardDataFromJSON = function(jsonString, cardIndex)
         cardData.States = { [2] = backData }
     end
     return cardData
+end
+
+PackBuilder.getImageUrl = function(card)
+    if card.multiverse_ids and card.multiverse_ids[1] then
+        return "https://gatherer.wizards.com/Handlers/Image.ashx?multiverseid="
+                .. card.multiverse_ids[1]
+                .. "&type=card"
+    end
+
+    local imageUris = card.image_uris or {}
+    local url = imageUris.normal or imageUris.large or imageUris.png
+    return url and url:gsub('%?.*', '')
 end
 
 PackBuilder.formattedName = function(face, typeSuffix)
@@ -1034,6 +1078,9 @@ end
 
 function onUpdate()
     data.timePassed = data.timePassed + Time.delta_time
+    if data.rateLimitCooldown > 0 then
+        data.rateLimitCooldown = math.max(0, data.rateLimitCooldown - Time.delta_time)
+    end
     if data.timePassed >= config.pollInterval then
         data.timePassed = 0
         onUpdateTick()
@@ -1105,11 +1152,17 @@ function onObjectLeaveContainer(container, leaveObject)
                     if leaveObject == null then
                         return
                     end
-                    local objectData = leaveObject.getData()
-                    leaveObject.destruct()
-                    objectData.ContainedObjects = PackBuilder.cache[currentBoosterID]
-                    local generatedBooster = spawnObjectData({ data = objectData })
-                    generatedBooster.setLuaScript(packLua)
+                    leaveObject.editButton({ index = 1, label = "loading images" })
+                    Wait.time(function()
+                        if leaveObject == null then
+                            return
+                        end
+                        local objectData = leaveObject.getData()
+                        leaveObject.destruct()
+                        objectData.ContainedObjects = PackBuilder.cache[currentBoosterID]
+                        local generatedBooster = spawnObjectData({ data = objectData })
+                        generatedBooster.setLuaScript(packLua)
+                    end, config.imageLoadDelay)
                 end, function()
                     return leaveObject == null or leaveObject.resting
                 end)

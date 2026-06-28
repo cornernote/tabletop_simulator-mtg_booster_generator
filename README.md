@@ -40,6 +40,18 @@ Almost all sets are supported.  The following have custom models:
 
 ---
 
+## 🛠 Development
+
+The editable Lua source lives in `src/`. The Tabletop Simulator script at `lua/booster-generator.lua` is generated with `luabundle`.
+
+Build the bundled script with:
+
+```bash
+node tools/build-lua-bundle.js
+```
+
+---
+
 ## 🙌 Credits & Thanks
 
 This mod uses the [Scryfall API](https://scryfall.com/) for real-time card data and images.

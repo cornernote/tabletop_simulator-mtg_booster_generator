@@ -12,6 +12,35 @@ LOGO_PATH = ROOT / "assets" / "logos" / "magic-the-gathering-2017-thumb.png"
 SIZE = (542, 958)
 
 
+def find_edge_alpha(alpha: Image.Image) -> set[tuple[int, int]]:
+    w, h = alpha.size
+    pix = alpha.load()
+    q: deque[tuple[int, int]] = deque()
+    seen: set[tuple[int, int]] = set()
+
+    for x in range(w):
+        if pix[x, 0] < 255:
+            q.append((x, 0))
+        if pix[x, h - 1] < 255:
+            q.append((x, h - 1))
+    for y in range(h):
+        if pix[0, y] < 255:
+            q.append((0, y))
+        if pix[w - 1, y] < 255:
+            q.append((w - 1, y))
+
+    while q:
+        x, y = q.popleft()
+        if x < 0 or y < 0 or x >= w or y >= h or (x, y) in seen:
+            continue
+        if pix[x, y] >= 255:
+            continue
+        seen.add((x, y))
+        q.extend(((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)))
+
+    return seen
+
+
 def remove_green_background(img: Image.Image) -> Image.Image:
     img = img.convert("RGBA")
     w, h = img.size
@@ -45,13 +74,15 @@ def remove_green_background(img: Image.Image) -> Image.Image:
     img = img.resize(SIZE, Image.Resampling.LANCZOS)
 
     pix = img.load()
+    alpha = img.getchannel("A")
+    edge_alpha = find_edge_alpha(alpha)
     w, h = img.size
     for y in range(h):
         for x in range(w):
             r, g, b, a = pix[x, y]
             if a == 0:
                 continue
-            if g > 115 and g > r * 1.3 and g > b * 1.3:
+            if (x, y) in edge_alpha and g > 115 and g > r * 1.3 and g > b * 1.3:
                 pix[x, y] = (r, g, b, 0)
             elif g > r + 35 and g > b + 35:
                 pix[x, y] = (r, max(r, b, int((r + b) / 2)), b, a)

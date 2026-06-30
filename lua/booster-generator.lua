@@ -1614,7 +1614,31 @@ end
 
 PackBuilder.chooseFastPoolCard = function(pool, seenNames)
     if not pool or #pool == 0 then
-        return nil
+        if not pool or not pool.cards or #pool.cards == 0 then
+            return nil
+        end
+
+        local candidates = {}
+        local totalWeight = 0
+        for _, entry in ipairs(pool.cards) do
+            if entry.card and not seenNames[entry.card.name] then
+                table.insert(candidates, entry)
+                totalWeight = totalWeight + entry.weight
+            end
+        end
+        if #candidates == 0 then
+            candidates = pool.cards
+            totalWeight = pool.totalWeight
+        end
+
+        local roll = math.random(totalWeight)
+        for _, entry in ipairs(candidates) do
+            roll = roll - entry.weight
+            if roll <= 0 then
+                return entry.card
+            end
+        end
+        return candidates[#candidates].card
     end
 
     local unseen = {}
@@ -1627,6 +1651,23 @@ PackBuilder.chooseFastPoolCard = function(pool, seenNames)
         pool = unseen
     end
     return pool[math.random(1, #pool)]
+end
+
+PackBuilder.resolveFastSheetPools = function(cardMap, sheets)
+    local pools = {}
+    for sheetName, sheet in pairs(sheets or {}) do
+        local pool = { cards = {}, totalWeight = 0, foil = sheet.foil }
+        for _, entry in ipairs(sheet.cards or {}) do
+            local card = cardMap[entry.id]
+            if card then
+                local weight = entry.weight or 1
+                table.insert(pool.cards, { card = card, weight = weight })
+                pool.totalWeight = pool.totalWeight + weight
+            end
+        end
+        pools[sheetName] = pool
+    end
+    return pools
 end
 
 PackBuilder.buildFastDeck = function(setCode, spec)
@@ -1667,7 +1708,9 @@ end
 
 PackBuilder.buildFastDeckAsync = function(setCode, spec, done)
     local cards = data.setCaches[setCode] or {}
-    PackBuilder.buildFastBoosterPoolsAsync(cards, function(pools)
+    local exactPools = data.fastSheetCaches[setCode]
+
+    local function buildDeckFromPools(pools)
         local variant = PackBuilder.chooseWeightedFastVariant(spec)
         local deck = {
             Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 180, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
@@ -1714,7 +1757,13 @@ PackBuilder.buildFastDeckAsync = function(setCode, spec, done)
         end
 
         processDeckChunk()
-    end)
+    end
+
+    if exactPools then
+        buildDeckFromPools(exactPools)
+    else
+        PackBuilder.buildFastBoosterPoolsAsync(cards, buildDeckFromPools)
+    end
 end
 
 PackBuilder.finishFastSetCacheLoad = function(setCode, loadState, error, source)
@@ -1730,6 +1779,12 @@ PackBuilder.loadPrebuiltSetCache = function(setCode, spec, leaveObject, callback
         return
     end
     local urls = spec.cardCacheUrls or (spec.cardCacheUrl and { spec.cardCacheUrl }) or nil
+    if not urls and spec.cardCacheBaseUrl and spec.cardCacheParts then
+        urls = {}
+        for i = 1, spec.cardCacheParts do
+            table.insert(urls, spec.cardCacheBaseUrl .. string.format("%03d.json", i))
+        end
+    end
     if not urls or #urls == 0 then
         callback("No prebuilt card cache URL configured.")
         return
@@ -1744,14 +1799,19 @@ PackBuilder.loadPrebuiltSetCache = function(setCode, spec, leaveObject, callback
     loadState = { callbacks = { callback }, leaveObject = leaveObject }
     data.fastSetCacheLoads[setCode] = loadState
 
-    local cards = {}
+    local cardList = {}
+    local cardMap = {}
+    local sheets = {}
     local partIndex = 1
 
     local function loadNextPart()
         local url = urls[partIndex]
         if not url then
-            data.setCaches[setCode] = cards
-            PackBuilder.printDebug("loaded prebuilt cache: " .. setCode .. " (" .. #cards .. " cards in " .. #urls .. " parts)")
+            data.setCaches[setCode] = cardList
+            if next(sheets) then
+                data.fastSheetCaches[setCode] = PackBuilder.resolveFastSheetPools(cardMap, sheets)
+            end
+            PackBuilder.printDebug("loaded prebuilt cache: " .. setCode .. " (" .. #cardList .. " cards in " .. #urls .. " parts)")
             PackBuilder.finishFastSetCacheLoad(setCode, loadState, nil, "prebuilt")
             return
         end
@@ -1772,11 +1832,31 @@ PackBuilder.loadPrebuiltSetCache = function(setCode, spec, leaveObject, callback
                     PackBuilder.finishFastSetCacheLoad(setCode, loadState, "Prebuilt cache JSON could not be decoded.")
                     return
                 end
-                local decodedCards = decoded and (decoded.cards or decoded)
+                local decodedCards = decoded and decoded.cards
                 if type(decodedCards) == "table" and #decodedCards > 0 then
                     for _, card in ipairs(decodedCards) do
-                        table.insert(cards, card)
+                        table.insert(cardList, card)
                     end
+                elseif type(decodedCards) == "table" then
+                    for id, card in pairs(decodedCards) do
+                        cardMap[id] = card
+                        table.insert(cardList, card)
+                    end
+                elseif decoded and decoded.name then
+                    table.insert(cardList, decoded)
+                elseif type(decoded) == "table" and not decoded.sheets then
+                    for _, card in ipairs(decoded) do
+                        table.insert(cardList, card)
+                    end
+                end
+
+                if decoded and type(decoded.sheets) == "table" then
+                    for sheetName, sheet in pairs(decoded.sheets) do
+                        sheets[sheetName] = sheet
+                    end
+                end
+
+                if #cardList > 0 or next(sheets) then
                     partIndex = partIndex + 1
                     Wait.time(loadNextPart, 0.01)
                     return
@@ -2247,34 +2327,16 @@ __bundle_register("fast_booster_specs", function(require, _LOADED, __bundle_regi
 local FastBoosterSpecs = {
     MKM = {
         name = "MKM Play Booster",
-        cardCacheUrls = {
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/001.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/002.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/003.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/004.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/005.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/006.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/007.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/008.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/009.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/010.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/011.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/012.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/013.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/014.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/015.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/016.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/017.json",
-            "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/018.json",
-        },
+        cardCacheBaseUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm/",
+        cardCacheParts = 26,
         variants = {
             {
                 weight = 28,
                 slots = {
-                    { pool = "land", count = 1 },
-                    { pool = "common", count = 7 },
-                    { pool = "uncommon", count = 3 },
-                    { pool = "rareMythic", count = 1 },
+                    { pool = "basic", count = 1 },
+                    { pool = "commonWithShowcase", count = 7 },
+                    { pool = "uncommonWithShowcase", count = 3 },
+                    { pool = "rareMythicWithShowcase", count = 1 },
                     { pool = "wildcard", count = 1 },
                     { pool = "foil", count = 1 },
                 },
@@ -2282,10 +2344,10 @@ local FastBoosterSpecs = {
             {
                 weight = 4,
                 slots = {
-                    { pool = "land", count = 1 },
-                    { pool = "common", count = 6 },
-                    { pool = "uncommon", count = 3 },
-                    { pool = "rareMythic", count = 1 },
+                    { pool = "basic", count = 1 },
+                    { pool = "commonWithShowcase", count = 6 },
+                    { pool = "uncommonWithShowcase", count = 3 },
+                    { pool = "rareMythicWithShowcase", count = 1 },
                     { pool = "wildcard", count = 1 },
                     { pool = "theList", count = 1 },
                     { pool = "foil", count = 1 },
@@ -2294,10 +2356,10 @@ local FastBoosterSpecs = {
             {
                 weight = 7,
                 slots = {
-                    { pool = "foilLand", count = 1 },
-                    { pool = "common", count = 7 },
-                    { pool = "uncommon", count = 3 },
-                    { pool = "rareMythic", count = 1 },
+                    { pool = "foilBasic", count = 1 },
+                    { pool = "commonWithShowcase", count = 7 },
+                    { pool = "uncommonWithShowcase", count = 3 },
+                    { pool = "rareMythicWithShowcase", count = 1 },
                     { pool = "wildcard", count = 1 },
                     { pool = "foil", count = 1 },
                 },
@@ -2305,10 +2367,10 @@ local FastBoosterSpecs = {
             {
                 weight = 1,
                 slots = {
-                    { pool = "foilLand", count = 1 },
-                    { pool = "common", count = 6 },
-                    { pool = "uncommon", count = 3 },
-                    { pool = "rareMythic", count = 1 },
+                    { pool = "foilBasic", count = 1 },
+                    { pool = "commonWithShowcase", count = 6 },
+                    { pool = "uncommonWithShowcase", count = 3 },
+                    { pool = "rareMythicWithShowcase", count = 1 },
                     { pool = "wildcard", count = 1 },
                     { pool = "theList", count = 1 },
                     { pool = "foil", count = 1 },
@@ -2696,6 +2758,7 @@ local data = {
     requestQueue = {},
     setCaches = {},
     setCacheLoads = {},
+    fastSheetCaches = {},
     fastSetCacheLoads = {},
     queryCaches = {},
     emptyQueryCaches = {},

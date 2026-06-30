@@ -70,6 +70,7 @@ function onObjectLeaveContainer(container, leaveObject)
     local currentBoosterID = data.boosterCount
     data.requestStartupDelay = math.random() * config.requestStartupJitter
     local packImage = PackBuilder.getPackImage(data.setCode, currentBoosterID)
+    PackBuilder.applyPackImage(leaveObject, packImage)
 
     leaveObject.createButton {
         label = "generating " .. data.setCode,

@@ -1326,6 +1326,15 @@ PackBuilder.copyTable = function(value)
     return copy
 end
 
+PackBuilder.applyPackImage = function(object, packImage)
+    if object == null or not packImage then
+        return
+    end
+    pcall(function()
+        object.setCustomObject({ diffuse = packImage })
+    end)
+end
+
 PackBuilder.spawnGeneratedBooster = function(leaveObject, boosterContents, packImage)
     if leaveObject == null then
         return

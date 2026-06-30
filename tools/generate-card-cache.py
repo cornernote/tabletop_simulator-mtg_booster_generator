@@ -103,15 +103,17 @@ def compact_card(card):
 
 def main():
     set_code = (sys.argv[1] if len(sys.argv) > 1 else "mkm").lower()
-    chunk_size = int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_CHUNK_SIZE
+    booster_key = (sys.argv[2] if len(sys.argv) > 2 else "play").lower()
+    output_code = (sys.argv[3] if len(sys.argv) > 3 else set_code).lower()
+    chunk_size = int(sys.argv[4]) if len(sys.argv) > 4 else DEFAULT_CHUNK_SIZE
     mtgjson_set = fetch_mtgjson_set(set_code)
-    play_booster = mtgjson_set["booster"]["play"]
+    booster = mtgjson_set["booster"][booster_key]
     uuid_to_mtgjson_card = {card["uuid"]: card for card in mtgjson_set["cards"]}
 
     card_ids = []
     seen_ids = set()
     sheets = {}
-    for sheet_name, sheet in play_booster["sheets"].items():
+    for sheet_name, sheet in booster["sheets"].items():
         entries = []
         for uuid, weight in sheet["cards"].items():
             mtgjson_card = uuid_to_mtgjson_card.get(uuid)
@@ -131,12 +133,12 @@ def main():
         }
 
     missing_uuids = []
-    for sheet in play_booster["sheets"].values():
+    for sheet in booster["sheets"].values():
         for uuid in sheet["cards"]:
             if uuid not in uuid_to_mtgjson_card:
                 missing_uuids.append(uuid)
     if missing_uuids:
-        for source_code in play_booster.get("sourceSetCodes", []):
+        for source_code in booster.get("sourceSetCodes", []):
             if source_code.upper() == set_code.upper():
                 continue
             source_set = fetch_mtgjson_set(source_code)
@@ -144,7 +146,7 @@ def main():
                 if card["uuid"] in missing_uuids:
                     uuid_to_mtgjson_card[card["uuid"]] = card
 
-        for sheet_name, sheet in play_booster["sheets"].items():
+        for sheet_name, sheet in booster["sheets"].items():
             entries_by_id = {entry["id"]: entry for entry in sheets[sheet_name]["cards"]}
             for uuid, weight in sheet["cards"].items():
                 mtgjson_card = uuid_to_mtgjson_card.get(uuid)
@@ -160,7 +162,7 @@ def main():
 
     unresolved_uuids = [
         uuid
-        for sheet in play_booster["sheets"].values()
+        for sheet in booster["sheets"].values()
         for uuid in sheet["cards"]
         if uuid not in uuid_to_mtgjson_card
     ]
@@ -170,7 +172,7 @@ def main():
     scryfall_cards = fetch_scryfall_collection(card_ids)
     scryfall_by_id = {card["id"]: compact_card(card) for card in scryfall_cards}
     cards = {card_id: scryfall_by_id[card_id] for card_id in card_ids if card_id in scryfall_by_id}
-    output_dir = ROOT / "assets" / "card-caches" / set_code
+    output_dir = ROOT / "assets" / "card-caches" / output_code
     output_dir.mkdir(parents=True, exist_ok=True)
     for old_cache in output_dir.glob("*.json"):
         old_cache.unlink()
@@ -184,6 +186,7 @@ def main():
             "source": "scryfall",
             "boosterSource": "mtgjson",
             "set": set_code.upper(),
+            "cache": output_code.upper(),
             "part": len(written) + 1,
             "cards": chunk,
         }
@@ -195,8 +198,9 @@ def main():
         payload = {
             "source": "mtgjson",
             "set": set_code.upper(),
+            "cache": output_code.upper(),
             "part": len(written) + 1,
-            "booster": "play",
+            "booster": booster_key,
             "sheets": {
                 sheet_name: sheet,
             },

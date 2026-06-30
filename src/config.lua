@@ -10,6 +10,8 @@ local config = {
     imageLoadDelay = 0.1,
     imageProxyBaseURL = "https://images.weserv.nl/?url=",
     cacheChunkSize = 25,
+    fastCacheChunkSize = 50,
+    fastDeckChunkSize = 4,
 }
 
 return config

@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 USER_AGENT = "tabletop-simulator-mtg-booster-generator-card-cache/0.1"
+DEFAULT_CHUNK_SIZE = 50
 
 
 def fetch_json(url):
@@ -74,17 +75,30 @@ def compact_card(card):
 
 def main():
     set_code = (sys.argv[1] if len(sys.argv) > 1 else "mkm").lower()
+    chunk_size = int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_CHUNK_SIZE
     cards = [compact_card(card) for card in fetch_set_cards(set_code)]
-    output_dir = ROOT / "assets" / "card-caches"
+    output_dir = ROOT / "assets" / "card-caches" / set_code
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / f"{set_code}.json"
-    payload = {
-        "source": "scryfall",
-        "set": set_code.upper(),
-        "cards": cards,
-    }
-    output_path.write_text(json.dumps(payload, separators=(",", ":"), ensure_ascii=True), encoding="utf-8")
-    print(f"Wrote {output_path} ({len(cards)} cards, {output_path.stat().st_size} bytes)")
+    for old_cache in output_dir.glob("*.json"):
+        old_cache.unlink()
+
+    written = []
+    for index in range(0, len(cards), chunk_size):
+        chunk = cards[index:index + chunk_size]
+        output_path = output_dir / f"{len(written) + 1:03}.json"
+        payload = {
+            "source": "scryfall",
+            "set": set_code.upper(),
+            "part": len(written) + 1,
+            "cards": chunk,
+        }
+        output_path.write_text(json.dumps(payload, separators=(",", ":"), ensure_ascii=True), encoding="utf-8")
+        written.append(output_path)
+
+    total_bytes = sum(path.stat().st_size for path in written)
+    print(f"Wrote {len(written)} chunks to {output_dir} ({len(cards)} cards, {total_bytes} bytes)")
+    for path in written:
+        print(f"- {path.name}: {path.stat().st_size} bytes")
 
 
 if __name__ == "__main__":

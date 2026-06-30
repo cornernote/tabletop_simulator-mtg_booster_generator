@@ -783,6 +783,55 @@ PackBuilder.buildFastBoosterPools = function(cards)
     return pools
 end
 
+PackBuilder.addCardToFastPools = function(pools, card)
+    local isBasicLand = PackBuilder.cardIsBasicLand(card)
+    if isBasicLand then
+        table.insert(pools.land, card)
+    elseif card.rarity == "common" then
+        table.insert(pools.common, card)
+        table.insert(pools.wildcard, card)
+    elseif card.rarity == "uncommon" then
+        table.insert(pools.uncommon, card)
+        table.insert(pools.wildcard, card)
+    elseif card.rarity == "rare" or card.rarity == "mythic" then
+        table.insert(pools.rareMythic, card)
+        table.insert(pools.wildcard, card)
+    end
+
+    if not isBasicLand then
+        table.insert(pools.foil, card)
+    end
+end
+
+PackBuilder.buildFastBoosterPoolsAsync = function(cards, done)
+    local pools = {
+        land = {},
+        common = {},
+        uncommon = {},
+        rareMythic = {},
+        wildcard = {},
+        foil = {},
+    }
+    local index = 1
+
+    local function processChunk()
+        local last = math.min(#cards, index + config.fastCacheChunkSize - 1)
+        for i = index, last do
+            PackBuilder.addCardToFastPools(pools, cards[i])
+        end
+        index = last + 1
+        if index <= #cards then
+            Wait.time(processChunk, 0.01)
+        else
+            pools.foilLand = pools.land
+            pools.theList = pools.wildcard
+            done(pools)
+        end
+    end
+
+    processChunk()
+end
+
 PackBuilder.chooseWeightedFastVariant = function(spec)
     local total = 0
     for _, variant in ipairs(spec.variants) do
@@ -852,6 +901,58 @@ PackBuilder.buildFastDeck = function(setCode, spec)
     return deck, requestErrors
 end
 
+PackBuilder.buildFastDeckAsync = function(setCode, spec, done)
+    local cards = data.setCaches[setCode] or {}
+    PackBuilder.buildFastBoosterPoolsAsync(cards, function(pools)
+        local variant = PackBuilder.chooseWeightedFastVariant(spec)
+        local deck = {
+            Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 180, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
+            Name = "Deck",
+            Nickname = setCode .. " Booster",
+            DeckIDs = {},
+            CustomDeck = {},
+            ContainedObjects = {},
+        }
+        local seenNames = {}
+        local requestErrors = {}
+        local cardIndex = 1
+        local plannedSlots = {}
+
+        for _, slot in ipairs(variant.slots) do
+            for _ = 1, slot.count do
+                table.insert(plannedSlots, slot.pool)
+            end
+        end
+
+        local slotIndex = 1
+        local function processDeckChunk()
+            local last = math.min(#plannedSlots, slotIndex + config.fastDeckChunkSize - 1)
+            for i = slotIndex, last do
+                local poolName = plannedSlots[i]
+                local card = PackBuilder.chooseFastPoolCard(pools[poolName] or {}, seenNames)
+                if card then
+                    seenNames[card.name] = true
+                    local cardData = PackBuilder.createCardData(card, cardIndex)
+                    deck.ContainedObjects[cardIndex] = cardData
+                    deck.DeckIDs[cardIndex] = cardData.CardID
+                    deck.CustomDeck[cardIndex] = cardData.CustomDeck[cardIndex]
+                    cardIndex = cardIndex + 1
+                else
+                    table.insert(requestErrors, { url = setCode .. ":" .. poolName, message = "No cached cards matched this fast booster slot." })
+                end
+            end
+            slotIndex = last + 1
+            if slotIndex <= #plannedSlots then
+                Wait.time(processDeckChunk, 0.01)
+            else
+                done(deck, requestErrors)
+            end
+        end
+
+        processDeckChunk()
+    end)
+end
+
 PackBuilder.finishFastSetCacheLoad = function(setCode, loadState, error, source)
     data.fastSetCacheLoads[setCode] = nil
     for _, callback in ipairs(loadState.callbacks) do
@@ -864,7 +965,8 @@ PackBuilder.loadPrebuiltSetCache = function(setCode, spec, leaveObject, callback
         callback(nil, "memory")
         return
     end
-    if not spec.cardCacheUrl then
+    local urls = spec.cardCacheUrls or (spec.cardCacheUrl and { spec.cardCacheUrl }) or nil
+    if not urls or #urls == 0 then
         callback("No prebuilt card cache URL configured.")
         return
     end
@@ -878,53 +980,73 @@ PackBuilder.loadPrebuiltSetCache = function(setCode, spec, leaveObject, callback
     loadState = { callbacks = { callback }, leaveObject = leaveObject }
     data.fastSetCacheLoads[setCode] = loadState
 
-    local function handleResponse(request)
-        if PackBuilder.isRateLimitedResponse(request) then
-            PackBuilder.startRateLimitCooldown(spec.cardCacheUrl, handleResponse, leaveObject)
+    local cards = {}
+    local partIndex = 1
+
+    local function loadNextPart()
+        local url = urls[partIndex]
+        if not url then
+            data.setCaches[setCode] = cards
+            PackBuilder.printDebug("loaded prebuilt cache: " .. setCode .. " (" .. #cards .. " cards in " .. #urls .. " parts)")
+            PackBuilder.finishFastSetCacheLoad(setCode, loadState, nil, "prebuilt")
             return
         end
 
-        if request.response_code == 200 then
-            local ok, decoded = pcall(function()
-                return JSON.decode(request.text)
-            end)
-            if not ok then
-                PackBuilder.finishFastSetCacheLoad(setCode, loadState, "Prebuilt cache JSON could not be decoded.")
+        PackBuilder.editStatusButton(leaveObject, "prebuilt " .. partIndex .. "/" .. #urls)
+
+        local function handleResponse(request)
+            if PackBuilder.isRateLimitedResponse(request) then
+                PackBuilder.startRateLimitCooldown(url, handleResponse, leaveObject)
                 return
             end
-            local cards = decoded and (decoded.cards or decoded)
-            if type(cards) == "table" and #cards > 0 then
-                data.setCaches[setCode] = cards
-                PackBuilder.printDebug("loaded prebuilt cache: " .. setCode .. " (" .. #cards .. " cards)")
-                PackBuilder.finishFastSetCacheLoad(setCode, loadState, nil, "prebuilt")
+
+            if request.response_code == 200 then
+                local ok, decoded = pcall(function()
+                    return JSON.decode(request.text)
+                end)
+                if not ok then
+                    PackBuilder.finishFastSetCacheLoad(setCode, loadState, "Prebuilt cache JSON could not be decoded.")
+                    return
+                end
+                local decodedCards = decoded and (decoded.cards or decoded)
+                if type(decodedCards) == "table" and #decodedCards > 0 then
+                    for _, card in ipairs(decodedCards) do
+                        table.insert(cards, card)
+                    end
+                    partIndex = partIndex + 1
+                    Wait.time(loadNextPart, 0.01)
+                    return
+                end
+                PackBuilder.finishFastSetCacheLoad(setCode, loadState, "Prebuilt cache did not contain cards.")
                 return
             end
-            PackBuilder.finishFastSetCacheLoad(setCode, loadState, "Prebuilt cache did not contain cards.")
-            return
+
+            local message = request.error or ("HTTP " .. tostring(request.response_code))
+            if request.text and request.text ~= "" then
+                local ok, errorInfo = pcall(function()
+                    return JSON.decode(request.text)
+                end)
+                errorInfo = ok and errorInfo or nil
+                message = errorInfo and errorInfo.details or message
+            end
+            PackBuilder.finishFastSetCacheLoad(setCode, loadState, message)
         end
 
-        local message = request.error or ("HTTP " .. tostring(request.response_code))
-        if request.text and request.text ~= "" then
-            local ok, errorInfo = pcall(function()
-                return JSON.decode(request.text)
-            end)
-            errorInfo = ok and errorInfo or nil
-            message = errorInfo and errorInfo.details or message
-        end
-        PackBuilder.finishFastSetCacheLoad(setCode, loadState, message)
+        PackBuilder.enqueueRequest(url, handleResponse, "end")
     end
 
-    PackBuilder.enqueueRequest(spec.cardCacheUrl, handleResponse, "end")
+    loadNextPart()
 end
 
 PackBuilder.buildFastDeckContents = function(boosterID, setCode, spec)
     local boosterContents = {}
-    local deck, requestErrors = PackBuilder.buildFastDeck(setCode, spec)
-    table.insert(boosterContents, deck)
-    for _, requestError in ipairs(requestErrors) do
-        table.insert(boosterContents, PackBuilder.generateErrorNotecard(requestError))
-    end
-    PackBuilder.cache[boosterID] = boosterContents
+    PackBuilder.buildFastDeckAsync(setCode, spec, function(deck, requestErrors)
+        table.insert(boosterContents, deck)
+        for _, requestError in ipairs(requestErrors) do
+            table.insert(boosterContents, PackBuilder.generateErrorNotecard(requestError))
+        end
+        PackBuilder.cache[boosterID] = boosterContents
+    end)
 end
 
 PackBuilder.fetchDeckDataFast = function(boosterID, setCode, leaveObject)

@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import deque
 from pathlib import Path
 
+import cv2
+import numpy as np
 from PIL import Image
 
 
@@ -42,25 +44,28 @@ def fix_image(path: Path) -> tuple[int, int]:
     img = Image.open(path).convert("RGBA")
     alpha = img.getchannel("A")
     edge_alpha = find_edge_alpha(alpha)
-    white_backed = Image.alpha_composite(Image.new("RGBA", img.size, (255, 255, 255, 255)), img)
 
     src = img.load()
-    backed = white_backed.load()
-    out = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    dst = out.load()
     w, h = img.size
-    repaired = 0
+    mask = np.zeros((h, w), dtype=np.uint8)
 
     for y in range(h):
         for x in range(w):
-            r, g, b, a = src[x, y]
             if a < 255 and (x, y) not in edge_alpha:
-                dst[x, y] = (*backed[x, y][:3], 255)
-                repaired += 1
-            else:
-                dst[x, y] = (r, g, b, a)
+                mask[y, x] = 255
 
+    repaired = int(np.count_nonzero(mask))
     if repaired:
+        rgb = np.array(img.convert("RGB"))
+        inpainted = cv2.inpaint(rgb, mask, 3, cv2.INPAINT_TELEA)
+        out = Image.fromarray(inpainted).convert("RGBA")
+        out_alpha = alpha.copy()
+        out_pix = out_alpha.load()
+        for y in range(h):
+            for x in range(w):
+                if mask[y, x]:
+                    out_pix[x, y] = 255
+        out.putalpha(out_alpha)
         out.save(path, optimize=True)
     return repaired, len(edge_alpha)
 

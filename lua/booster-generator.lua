@@ -115,10 +115,6 @@ function onObjectLeaveContainer(container, leaveObject)
     data.requestStartupDelay = math.random() * config.requestStartupJitter
     local packImage = PackBuilder.getPackImage(data.setCode, currentBoosterID)
 
-    local baseUrls = BoosterUrls.getSetUrls(data.setCode)
-    local urls = PackBuilder.narrowBroadQueries(baseUrls)
-    local cacheUrls = PackBuilder.getWarmCacheQueriesFromUrls(baseUrls)
-
     leaveObject.createButton {
         label = "generating " .. data.setCode,
         click_function = "noop",
@@ -150,7 +146,12 @@ function onObjectLeaveContainer(container, leaveObject)
     }
 
     leaveObject.setLuaScript("function tryObjectEnter() return false end")
-    PackBuilder.fetchDeckData(currentBoosterID, data.setCode, urls, leaveObject, nil, nil, nil, nil, cacheUrls, "set:" .. data.setCode)
+    if not PackBuilder.fetchDeckDataFast(currentBoosterID, data.setCode, leaveObject) then
+        local baseUrls = BoosterUrls.getSetUrls(data.setCode)
+        local urls = PackBuilder.narrowBroadQueries(baseUrls)
+        local cacheUrls = PackBuilder.getWarmCacheQueriesFromUrls(baseUrls)
+        PackBuilder.fetchDeckData(currentBoosterID, data.setCode, urls, leaveObject, nil, nil, nil, nil, cacheUrls, "set:" .. data.setCode)
+    end
 
     Wait.condition(
             function()
@@ -282,7 +283,7 @@ local PACK_IMAGE_BASE_URL = "https://raw.githubusercontent.com/cornernote/tablet
 local function packImage(code, variant)
     local lowerCode = string.lower(code)
     if lowerCode == "---" then
-        return PACK_IMAGE_BASE_URL .. "---_pack.png"
+        return PACK_IMAGE_BASE_URL .. "----pack.png"
     end
     if variant then
         return PACK_IMAGE_BASE_URL .. lowerCode .. "-pack-" .. variant .. ".png"
@@ -764,6 +765,8 @@ __bundle_register("pack_builder", function(require, _LOADED, __bundle_register, 
 -----------------------------------------------------------------------
 -- PackBuilder - fetches card info and builds a booster pack
 -----------------------------------------------------------------------
+
+local FastBoosterSpecs = require("fast_booster_specs")
 
 PackBuilder = {}
 
@@ -1501,6 +1504,224 @@ PackBuilder.getCachedCandidates = function(url)
     return candidates
 end
 
+PackBuilder.hasFastBoosterSpec = function(setCode)
+    return FastBoosterSpecs[setCode] ~= nil
+end
+
+PackBuilder.cardIsBasicLand = function(card)
+    return PackBuilder.cardHasType(card, "Basic") and PackBuilder.cardHasType(card, "Land")
+end
+
+PackBuilder.buildFastBoosterPools = function(cards)
+    local pools = {
+        land = {},
+        common = {},
+        uncommon = {},
+        rareMythic = {},
+        wildcard = {},
+        foil = {},
+    }
+
+    for _, card in ipairs(cards) do
+        local isBasicLand = PackBuilder.cardIsBasicLand(card)
+        if isBasicLand then
+            table.insert(pools.land, card)
+        elseif card.rarity == "common" then
+            table.insert(pools.common, card)
+            table.insert(pools.wildcard, card)
+        elseif card.rarity == "uncommon" then
+            table.insert(pools.uncommon, card)
+            table.insert(pools.wildcard, card)
+        elseif card.rarity == "rare" or card.rarity == "mythic" then
+            table.insert(pools.rareMythic, card)
+            table.insert(pools.wildcard, card)
+        end
+
+        if not isBasicLand then
+            table.insert(pools.foil, card)
+        end
+    end
+
+    pools.foilLand = pools.land
+    pools.theList = pools.wildcard
+    return pools
+end
+
+PackBuilder.chooseWeightedFastVariant = function(spec)
+    local total = 0
+    for _, variant in ipairs(spec.variants) do
+        total = total + variant.weight
+    end
+
+    local roll = math.random(total)
+    for _, variant in ipairs(spec.variants) do
+        roll = roll - variant.weight
+        if roll <= 0 then
+            return variant
+        end
+    end
+    return spec.variants[#spec.variants]
+end
+
+PackBuilder.chooseFastPoolCard = function(pool, seenNames)
+    if not pool or #pool == 0 then
+        return nil
+    end
+
+    local unseen = {}
+    for _, card in ipairs(pool) do
+        if not seenNames[card.name] then
+            table.insert(unseen, card)
+        end
+    end
+    if #unseen > 0 then
+        pool = unseen
+    end
+    return pool[math.random(1, #pool)]
+end
+
+PackBuilder.buildFastDeck = function(setCode, spec)
+    local cards = data.setCaches[setCode] or {}
+    local pools = PackBuilder.buildFastBoosterPools(cards)
+    local variant = PackBuilder.chooseWeightedFastVariant(spec)
+    local deck = {
+        Transform = { posX = 0, posY = 0, posZ = 0, rotX = 0, rotY = 180, rotZ = 0, scaleX = 1, scaleY = 1, scaleZ = 1 },
+        Name = "Deck",
+        Nickname = setCode .. " Booster",
+        DeckIDs = {},
+        CustomDeck = {},
+        ContainedObjects = {},
+    }
+    local seenNames = {}
+    local requestErrors = {}
+    local cardIndex = 1
+
+    for _, slot in ipairs(variant.slots) do
+        local pool = pools[slot.pool] or {}
+        for _ = 1, slot.count do
+            local card = PackBuilder.chooseFastPoolCard(pool, seenNames)
+            if card then
+                seenNames[card.name] = true
+                local cardData = PackBuilder.createCardData(card, cardIndex)
+                deck.ContainedObjects[cardIndex] = cardData
+                deck.DeckIDs[cardIndex] = cardData.CardID
+                deck.CustomDeck[cardIndex] = cardData.CustomDeck[cardIndex]
+                cardIndex = cardIndex + 1
+            else
+                table.insert(requestErrors, { url = setCode .. ":" .. slot.pool, message = "No cached cards matched this fast booster slot." })
+            end
+        end
+    end
+
+    return deck, requestErrors
+end
+
+PackBuilder.finishFastSetCacheLoad = function(setCode, loadState, error, source)
+    data.fastSetCacheLoads[setCode] = nil
+    for _, callback in ipairs(loadState.callbacks) do
+        callback(error, source)
+    end
+end
+
+PackBuilder.loadPrebuiltSetCache = function(setCode, spec, leaveObject, callback)
+    if data.setCaches[setCode] then
+        callback(nil, "memory")
+        return
+    end
+    if not spec.cardCacheUrl then
+        callback("No prebuilt card cache URL configured.")
+        return
+    end
+
+    local loadState = data.fastSetCacheLoads[setCode]
+    if loadState then
+        table.insert(loadState.callbacks, callback)
+        return
+    end
+
+    loadState = { callbacks = { callback }, leaveObject = leaveObject }
+    data.fastSetCacheLoads[setCode] = loadState
+
+    local function handleResponse(request)
+        if PackBuilder.isRateLimitedResponse(request) then
+            PackBuilder.startRateLimitCooldown(spec.cardCacheUrl, handleResponse, leaveObject)
+            return
+        end
+
+        if request.response_code == 200 then
+            local ok, decoded = pcall(function()
+                return JSON.decode(request.text)
+            end)
+            if not ok then
+                PackBuilder.finishFastSetCacheLoad(setCode, loadState, "Prebuilt cache JSON could not be decoded.")
+                return
+            end
+            local cards = decoded and (decoded.cards or decoded)
+            if type(cards) == "table" and #cards > 0 then
+                data.setCaches[setCode] = cards
+                PackBuilder.printDebug("loaded prebuilt cache: " .. setCode .. " (" .. #cards .. " cards)")
+                PackBuilder.finishFastSetCacheLoad(setCode, loadState, nil, "prebuilt")
+                return
+            end
+            PackBuilder.finishFastSetCacheLoad(setCode, loadState, "Prebuilt cache did not contain cards.")
+            return
+        end
+
+        local message = request.error or ("HTTP " .. tostring(request.response_code))
+        if request.text and request.text ~= "" then
+            local ok, errorInfo = pcall(function()
+                return JSON.decode(request.text)
+            end)
+            errorInfo = ok and errorInfo or nil
+            message = errorInfo and errorInfo.details or message
+        end
+        PackBuilder.finishFastSetCacheLoad(setCode, loadState, message)
+    end
+
+    PackBuilder.enqueueRequest(spec.cardCacheUrl, handleResponse, "end")
+end
+
+PackBuilder.buildFastDeckContents = function(boosterID, setCode, spec)
+    local boosterContents = {}
+    local deck, requestErrors = PackBuilder.buildFastDeck(setCode, spec)
+    table.insert(boosterContents, deck)
+    for _, requestError in ipairs(requestErrors) do
+        table.insert(boosterContents, PackBuilder.generateErrorNotecard(requestError))
+    end
+    PackBuilder.cache[boosterID] = boosterContents
+end
+
+PackBuilder.fetchDeckDataFast = function(boosterID, setCode, leaveObject)
+    local spec = FastBoosterSpecs[setCode]
+    if not spec then
+        return false
+    end
+
+    PackBuilder.editStatusButton(leaveObject, "prebuilt cache")
+    PackBuilder.loadPrebuiltSetCache(setCode, spec, leaveObject, function(error)
+        if not error then
+            PackBuilder.editStatusButton(leaveObject, "fast build")
+            PackBuilder.buildFastDeckContents(boosterID, setCode, spec)
+            return
+        end
+
+        PackBuilder.printDebug("prebuilt cache failed for " .. setCode .. ": " .. tostring(error) .. "; falling back to Scryfall")
+        PackBuilder.editStatusButton(leaveObject, "scryfall cache")
+        PackBuilder.loadSetCache(setCode, leaveObject, function(fallbackError)
+            local boosterContents = {}
+            if fallbackError then
+                table.insert(boosterContents, PackBuilder.generateErrorNotecard({ url = setCode, message = fallbackError }))
+                PackBuilder.cache[boosterID] = boosterContents
+                return
+            end
+
+            PackBuilder.editStatusButton(leaveObject, "fast build")
+            PackBuilder.buildFastDeckContents(boosterID, setCode, spec)
+        end)
+    end)
+    return true
+end
+
 PackBuilder.chooseCachedCard = function(url, seenNames)
     local candidates = PackBuilder.getCachedCandidates(url)
     if #candidates == 0 then
@@ -1896,6 +2117,69 @@ end
 return PackBuilder
 
 end)
+__bundle_register("fast_booster_specs", function(require, _LOADED, __bundle_register, __bundle_modules)
+-----------------------------------------------------------------------
+-- FastBoosterSpecs - compact local booster recipes for one-set caches
+-----------------------------------------------------------------------
+
+local FastBoosterSpecs = {
+    MKM = {
+        name = "MKM Play Booster",
+        cardCacheUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/card-caches/mkm.json",
+        variants = {
+            {
+                weight = 28,
+                slots = {
+                    { pool = "land", count = 1 },
+                    { pool = "common", count = 7 },
+                    { pool = "uncommon", count = 3 },
+                    { pool = "rareMythic", count = 1 },
+                    { pool = "wildcard", count = 1 },
+                    { pool = "foil", count = 1 },
+                },
+            },
+            {
+                weight = 4,
+                slots = {
+                    { pool = "land", count = 1 },
+                    { pool = "common", count = 6 },
+                    { pool = "uncommon", count = 3 },
+                    { pool = "rareMythic", count = 1 },
+                    { pool = "wildcard", count = 1 },
+                    { pool = "theList", count = 1 },
+                    { pool = "foil", count = 1 },
+                },
+            },
+            {
+                weight = 7,
+                slots = {
+                    { pool = "foilLand", count = 1 },
+                    { pool = "common", count = 7 },
+                    { pool = "uncommon", count = 3 },
+                    { pool = "rareMythic", count = 1 },
+                    { pool = "wildcard", count = 1 },
+                    { pool = "foil", count = 1 },
+                },
+            },
+            {
+                weight = 1,
+                slots = {
+                    { pool = "foilLand", count = 1 },
+                    { pool = "common", count = 6 },
+                    { pool = "uncommon", count = 3 },
+                    { pool = "rareMythic", count = 1 },
+                    { pool = "wildcard", count = 1 },
+                    { pool = "theList", count = 1 },
+                    { pool = "foil", count = 1 },
+                },
+            },
+        },
+    },
+}
+
+return FastBoosterSpecs
+
+end)
 __bundle_register("booster_urls", function(require, _LOADED, __bundle_register, __bundle_modules)
 -----------------------------------------------------------------------
 -- BoosterUrls - builds URL lists for set types
@@ -2139,7 +2423,7 @@ local packLua = [[
 -- Most recent script can be found on GitHub:
 -- https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua
 local defaultSetCode = "???"
-local defaultPack = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/---_pack.png"
+local defaultPack = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/----pack.png"
 function tryObjectEnter()
     return false
 end
@@ -2271,6 +2555,7 @@ local data = {
     requestQueue = {},
     setCaches = {},
     setCacheLoads = {},
+    fastSetCacheLoads = {},
     queryCaches = {},
     emptyQueryCaches = {},
     queryCacheLoads = {},
@@ -2286,7 +2571,7 @@ local config = {
     backURL = 'https://steamusercontent-a.akamaihd.net/ugc/1647720103762682461/35EF6E87970E2A5D6581E7D96A99F8A575B7A15F/',
     apiBaseURL = 'https://api.scryfall.com/cards/random?q=',
     searchBaseURL = 'https://api.scryfall.com/cards/search?order=set&unique=prints&q=',
-    defaultPackImage = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/---_pack.png", -- same url used in packLua
+    defaultPackImage = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/----pack.png", -- same url used in packLua
     defaultSetCode = "???", -- same setCode used in packLua
     pollInterval = 1.2,
     rateLimitDelay = 60,
@@ -2302,7 +2587,7 @@ end)
 __bundle_register("auto_updater", function(require, _LOADED, __bundle_register, __bundle_modules)
 local AutoUpdater = {
     name = "Any MTG Booster Generator",
-    version = "1.7.27",
+    version = "1.7.28",
     versionUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.ver",
     scriptUrl = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/refs/heads/main/lua/booster-generator.lua",
     debug = false,

@@ -3,7 +3,7 @@ local packLua = [[
 -- Most recent script can be found on GitHub:
 -- https://github.com/cornernote/tabletop_simulator-mtg_booster_generator/blob/main/lua/booster-generator.lua
 local defaultSetCode = "???"
-local defaultPack = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/---_pack.png"
+local defaultPack = "https://raw.githubusercontent.com/cornernote/tabletop_simulator-mtg_booster_generator/main/assets/packs/----pack.png"
 function tryObjectEnter()
     return false
 end

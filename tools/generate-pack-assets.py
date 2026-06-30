@@ -114,7 +114,7 @@ def draw_centered(draw: ImageDraw.ImageDraw, text: str, y: int, font: ImageFont.
     draw.text((x, y), text, font=font, fill=fill, stroke_width=stroke, stroke_fill=(0, 0, 0, 180))
 
 
-def make_pack(code: str, title: str, subtitle: str, colors: tuple[str, str, str], variant: int = 0):
+def make_pack(code: str, title: str, subtitle: str, colors: tuple[str, str, str], variant: int = 0, include_logo: bool = True):
     random.seed(f"{code}-{variant}")
     c1, c2, c3 = map(hex_to_rgb, colors)
     w, h = SIZE
@@ -194,15 +194,15 @@ def make_pack(code: str, title: str, subtitle: str, colors: tuple[str, str, str]
     draw.ellipse((468, 96, 520, 148), fill=(255, 255, 255, 235))
     draw.text((480, 109), "13+", font=sans_bold, fill=(18, 24, 38, 255))
 
-    # Real logo.
-    logo_w = 270
-    logo_y = 92
-    mark = logo_mark(logo_w, (255, 255, 250, 245))
-    shadow = logo_mark(logo_w, (0, 0, 0, 180)).filter(ImageFilter.GaussianBlur(1.0))
-    lx = (w - logo_w) // 2
-    img.alpha_composite(shadow, (lx + 2, logo_y + 2))
-    img.alpha_composite(mark, (lx, logo_y))
-    draw = ImageDraw.Draw(img)
+    if include_logo:
+        logo_w = 270
+        logo_y = 92
+        mark = logo_mark(logo_w, (255, 255, 250, 245))
+        shadow = logo_mark(logo_w, (0, 0, 0, 180)).filter(ImageFilter.GaussianBlur(1.0))
+        lx = (w - logo_w) // 2
+        img.alpha_composite(shadow, (lx + 2, logo_y + 2))
+        img.alpha_composite(mark, (lx, logo_y))
+        draw = ImageDraw.Draw(img)
 
     # Set title plate.
     plate_y = 695

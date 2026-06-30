@@ -1,0 +1,346 @@
+#!/usr/bin/env python3
+import json
+import textwrap
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT_DIR = ROOT / "docs" / "prototypes"
+SET_CODE = "mkm"
+USER_AGENT = "tabletop-simulator-mtg-booster-generator-fast-cache-prototype/0.1"
+
+
+def fetch_json(url):
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "application/json",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=60) as response:
+        return json.load(response)
+
+
+def fetch_scryfall_search(query):
+    cards = []
+    url = "https://api.scryfall.com/cards/search?order=set&unique=prints&q=" + urllib.parse.quote(query)
+    while url:
+        page = fetch_json(url)
+        cards.extend(page.get("data", []))
+        url = page.get("next_page") if page.get("has_more") else None
+    return cards
+
+
+def compact_card(card):
+    image = card.get("image_uris") or {}
+    if not image and card.get("card_faces"):
+        image = card["card_faces"][0].get("image_uris") or {}
+    colors = card.get("colors")
+    if colors is None and card.get("card_faces"):
+        seen = []
+        for face in card["card_faces"]:
+            for color in face.get("colors") or []:
+                if color not in seen:
+                    seen.append(color)
+        colors = seen
+    return {
+        "name": card.get("name", ""),
+        "rarity": card.get("rarity", ""),
+        "type": card.get("type_line", ""),
+        "colors": "".join(colors or []),
+        "layout": card.get("layout", ""),
+        "number": card.get("collector_number", ""),
+        "image": image.get("normal") or image.get("large") or image.get("small") or "",
+    }
+
+
+def lua_quote(value):
+    value = value.replace("\u2014", "-")
+    value = value.encode("ascii", "replace").decode("ascii")
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
+
+
+def lua_value(value, indent=0):
+    pad = " " * indent
+    if isinstance(value, str):
+        return lua_quote(value)
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, list):
+        if not value:
+            return "{}"
+        inner = ",\n".join(pad + "    " + lua_value(item, indent + 4) for item in value)
+        return "{\n" + inner + "\n" + pad + "}"
+    if isinstance(value, dict):
+        if not value:
+            return "{}"
+        lines = []
+        for key, item in value.items():
+            lines.append(pad + "    " + key + " = " + lua_value(item, indent + 4))
+        return "{\n" + ",\n".join(lines) + "\n" + pad + "}"
+    raise TypeError(type(value))
+
+
+def is_basic(card):
+    return "Basic Land" in card["type"]
+
+
+def is_common(card):
+    return card["rarity"] == "common" and not is_basic(card)
+
+
+def is_uncommon(card):
+    return card["rarity"] == "uncommon"
+
+
+def is_rare_mythic(card):
+    return card["rarity"] in ("rare", "mythic")
+
+
+def current_mkm_warm_cache_shape():
+    # MKM currently uses BoosterUrls.default14CardPack. The warm cache expands
+    # broad rarity queries across seven color/type buckets and also rarity
+    # alternates for rare/mythic slots.
+    buckets = ["c>=w", "c>=u", "c>=b", "c>=r", "c>=g", "c:c+t:creature", "c:c+-t:creature"]
+    queries = set()
+
+    def add(query, broad=False):
+        if broad:
+            for bucket in buckets:
+                queries.add(query + "+" + bucket)
+        else:
+            queries.add(query)
+
+    add("set:MKM+t:basic+unique:prints")
+    for color in "wubrg":
+        add(f"set:MKM+r:common+-t:basic+c>={color}")
+    add("set:MKM+r:common+-t:basic", broad=True)
+    add("set:MKM+r:u", broad=True)
+    # Current code warms alternate r:r/r:m versions when a generated pack asks
+    # for one or the other. A single run will not hit every possibility, but
+    # these are the expensive broad pools it can create over repeated packs.
+    for rarity in ("r:common", "r:u", "r:r", "r:m"):
+        add(f"set:MKM+{rarity}", broad=True)
+    return sorted(queries)
+
+
+def build_lua(cards):
+    fixture = {
+        "setCode": SET_CODE.upper(),
+        "cards": cards,
+        "packVariants": [
+            {"weight": 28, "slots": {"land": 1, "common": 7, "foil": 1, "rareMythic": 1, "uncommon": 3, "wildcard": 1}},
+            {"weight": 4, "slots": {"land": 1, "common": 6, "foil": 1, "rareMythic": 1, "theList": 1, "uncommon": 3, "wildcard": 1}},
+            {"weight": 7, "slots": {"foilLand": 1, "common": 7, "foil": 1, "rareMythic": 1, "uncommon": 3, "wildcard": 1}},
+            {"weight": 1, "slots": {"foilLand": 1, "common": 6, "foil": 1, "rareMythic": 1, "theList": 1, "uncommon": 3, "wildcard": 1}},
+        ],
+    }
+    return textwrap.dedent(
+        f"""\
+        -- Prototype: compact one-hit cache for {SET_CODE.upper()} Play Boosters.
+        -- Generated by tools/build-fast-cache-prototype.py.
+        -- Paste into Tabletop Simulator or run with a Lua interpreter to sanity-check
+        -- local pack generation without making per-slot Scryfall cache requests.
+
+        local Fixture = {lua_value(fixture)}
+
+        local function hasType(card, needle)
+            return string.find(string.lower(card.type or ""), string.lower(needle), 1, true) ~= nil
+        end
+
+        local function pushMany(target, source)
+            for _, card in ipairs(source) do
+                table.insert(target, card)
+            end
+        end
+
+        local FastCache = {{}}
+
+        function FastCache.buildPools(cards)
+            local pools = {{
+                land = {{}},
+                common = {{}},
+                uncommon = {{}},
+                rareMythic = {{}},
+                wildcard = {{}},
+                foil = {{}},
+            }}
+
+            for _, card in ipairs(cards) do
+                local basic = hasType(card, "Basic Land")
+                if basic then
+                    table.insert(pools.land, card)
+                elseif card.rarity == "common" then
+                    table.insert(pools.common, card)
+                    table.insert(pools.wildcard, card)
+                elseif card.rarity == "uncommon" then
+                    table.insert(pools.uncommon, card)
+                    table.insert(pools.wildcard, card)
+                elseif card.rarity == "rare" or card.rarity == "mythic" then
+                    table.insert(pools.rareMythic, card)
+                    table.insert(pools.wildcard, card)
+                end
+
+                if not basic then
+                    table.insert(pools.foil, card)
+                end
+            end
+
+            pools.foilLand = pools.land
+            pools.theList = pools.wildcard -- placeholder for the prototype.
+            return pools
+        end
+
+        local function chooseWeighted(variants)
+            local total = 0
+            for _, variant in ipairs(variants) do
+                total = total + variant.weight
+            end
+            local roll = math.random(total)
+            for _, variant in ipairs(variants) do
+                roll = roll - variant.weight
+                if roll <= 0 then
+                    return variant
+                end
+            end
+            return variants[#variants]
+        end
+
+        local function choose(pool, seen)
+            if #pool == 0 then
+                return nil
+            end
+            for _ = 1, 20 do
+                local card = pool[math.random(#pool)]
+                if not seen[card.name] then
+                    seen[card.name] = true
+                    return card
+                end
+            end
+            return pool[math.random(#pool)]
+        end
+
+        function FastCache.generatePack(fixture)
+            local pools = fixture.pools or FastCache.buildPools(fixture.cards)
+            fixture.pools = pools
+            local variant = chooseWeighted(fixture.packVariants)
+            local pack = {{}}
+            local seen = {{}}
+
+            local order = {{ "land", "foilLand", "common", "uncommon", "rareMythic", "wildcard", "foil", "theList" }}
+            for _, slotName in ipairs(order) do
+                local count = variant.slots[slotName] or 0
+                for _ = 1, count do
+                    local card = choose(pools[slotName] or {{}}, seen)
+                    if card then
+                        table.insert(pack, {{ slot = slotName, name = card.name, rarity = card.rarity, number = card.number }})
+                    else
+                        table.insert(pack, {{ slot = slotName, name = "MISSING: " .. slotName }})
+                    end
+                end
+            end
+
+            return pack
+        end
+
+        function FastCache.stats(fixture)
+            local pools = FastCache.buildPools(fixture.cards)
+            return {{
+                cards = #fixture.cards,
+                land = #pools.land,
+                common = #pools.common,
+                uncommon = #pools.uncommon,
+                rareMythic = #pools.rareMythic,
+                wildcard = #pools.wildcard,
+                foil = #pools.foil,
+            }}
+        end
+
+        math.randomseed(os.time())
+
+        local stats = FastCache.stats(Fixture)
+        print("Fast cache prototype for " .. Fixture.setCode)
+        print("cards=" .. stats.cards
+            .. " land=" .. stats.land
+            .. " common=" .. stats.common
+            .. " uncommon=" .. stats.uncommon
+            .. " rareMythic=" .. stats.rareMythic
+            .. " wildcard=" .. stats.wildcard
+            .. " foil=" .. stats.foil)
+
+        local pack = FastCache.generatePack(Fixture)
+        for index, card in ipairs(pack) do
+            print(index .. ". [" .. card.slot .. "] " .. card.name .. " (" .. (card.rarity or "") .. ")")
+        end
+
+        return FastCache
+        """
+    )
+
+
+def main():
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    cards = [compact_card(card) for card in fetch_scryfall_search(f"set:{SET_CODE}")]
+    cards.sort(key=lambda card: (card["number"], card["name"]))
+
+    lua = build_lua(cards)
+    lua_path = OUT_DIR / "mkm_play_fast_cache.lua"
+    lua_path.write_text(lua, encoding="utf-8")
+
+    current_queries = current_mkm_warm_cache_shape()
+    current_query_text = "\n".join(f"- `{query}`" for query in current_queries)
+    compact_json_bytes = len(json.dumps(cards, separators=(",", ":")).encode("utf-8"))
+    lua_bytes = lua_path.stat().st_size
+    pool_counts = {
+        "land": sum(1 for card in cards if is_basic(card)),
+        "common": sum(1 for card in cards if is_common(card)),
+        "uncommon": sum(1 for card in cards if is_uncommon(card)),
+        "rareMythic": sum(1 for card in cards if is_rare_mythic(card)),
+        "wildcard": sum(1 for card in cards if not is_basic(card)),
+        "foil": sum(1 for card in cards if not is_basic(card)),
+    }
+
+    report = f"""# MKM Fast Cache Prototype
+
+Generated from Scryfall `set:{SET_CODE}`.
+
+## Files
+
+- `mkm_play_fast_cache.lua`: standalone Lua prototype with compact MKM card data and local Play Booster slot selection.
+
+## Why This Test
+
+The current generator warms many Scryfall search caches for a set. For MKM, the current `default14CardPack` warm shape can expand to about {len(current_queries)} query caches over repeated packs. The prototype loads the set card pool once, builds local slot pools, and then generates packs without additional per-slot search caches.
+
+## Compact Fixture
+
+- Cards loaded: {len(cards)}
+- Compact JSON payload size: {compact_json_bytes:,} bytes
+- Generated Lua fixture size: {lua_bytes:,} bytes
+- Pool counts: {pool_counts}
+
+## Current Warm Query Shape For MKM
+
+{current_query_text}
+
+## Prototype Caveats
+
+- This is not production code.
+- The List slot is mapped to the wildcard pool as a placeholder.
+- Foil slots use the same card records with a slot label; this tests cache shape and local selection, not visual foil treatment.
+- Exact MTGJSON sheet membership is not yet used. This prototype tests the speed idea first: one compact pool load, local buckets, then random picks.
+"""
+    (OUT_DIR / "mkm_play_fast_cache_report.md").write_text(report, encoding="utf-8")
+
+    print(lua_path)
+    print(OUT_DIR / "mkm_play_fast_cache_report.md")
+    print(f"cards={len(cards)} compact_json_bytes={compact_json_bytes} current_queries={len(current_queries)}")
+
+
+if __name__ == "__main__":
+    main()

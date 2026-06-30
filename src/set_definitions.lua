@@ -7,7 +7,7 @@ local PACK_IMAGE_BASE_URL = "https://raw.githubusercontent.com/cornernote/tablet
 local function packImage(code, variant)
     local lowerCode = string.lower(code)
     if lowerCode == "---" then
-        return PACK_IMAGE_BASE_URL .. "---_pack.png"
+        return PACK_IMAGE_BASE_URL .. "----pack.png"
     end
     if variant then
         return PACK_IMAGE_BASE_URL .. lowerCode .. "-pack-" .. variant .. ".png"

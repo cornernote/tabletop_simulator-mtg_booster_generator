@@ -9,6 +9,7 @@ local data = {
     requestQueue = {},
     setCaches = {},
     setCacheLoads = {},
+    fastSetCacheLoads = {},
     queryCaches = {},
     emptyQueryCaches = {},
     queryCacheLoads = {},

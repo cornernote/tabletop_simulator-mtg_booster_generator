@@ -71,10 +71,6 @@ function onObjectLeaveContainer(container, leaveObject)
     data.requestStartupDelay = math.random() * config.requestStartupJitter
     local packImage = PackBuilder.getPackImage(data.setCode, currentBoosterID)
 
-    local baseUrls = BoosterUrls.getSetUrls(data.setCode)
-    local urls = PackBuilder.narrowBroadQueries(baseUrls)
-    local cacheUrls = PackBuilder.getWarmCacheQueriesFromUrls(baseUrls)
-
     leaveObject.createButton {
         label = "generating " .. data.setCode,
         click_function = "noop",
@@ -106,7 +102,12 @@ function onObjectLeaveContainer(container, leaveObject)
     }
 
     leaveObject.setLuaScript("function tryObjectEnter() return false end")
-    PackBuilder.fetchDeckData(currentBoosterID, data.setCode, urls, leaveObject, nil, nil, nil, nil, cacheUrls, "set:" .. data.setCode)
+    if not PackBuilder.fetchDeckDataFast(currentBoosterID, data.setCode, leaveObject) then
+        local baseUrls = BoosterUrls.getSetUrls(data.setCode)
+        local urls = PackBuilder.narrowBroadQueries(baseUrls)
+        local cacheUrls = PackBuilder.getWarmCacheQueriesFromUrls(baseUrls)
+        PackBuilder.fetchDeckData(currentBoosterID, data.setCode, urls, leaveObject, nil, nil, nil, nil, cacheUrls, "set:" .. data.setCode)
+    end
 
     Wait.condition(
             function()

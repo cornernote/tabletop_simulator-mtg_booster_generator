@@ -28,6 +28,16 @@ CONFIGS = {
 }
 
 OLD_LOGO_BOX = (116, 72, 432, 164)
+EXTRA_REMOVE_BOXES = {
+    "cns": [(292, 92, 494, 158)],
+    "csp": [(44, 92, 250, 158)],
+    "dka": [(296, 94, 494, 158)],
+    "emn": [(300, 94, 494, 158)],
+    "ice": [(296, 100, 494, 164)],
+    "mh1": [(44, 92, 250, 158)],
+    "war": [(44, 94, 250, 160)],
+    "znr": [(48, 96, 250, 160)],
+}
 
 
 def logo_mask(width: int, vertical: bool) -> Image.Image:
@@ -66,12 +76,12 @@ def add_logo(img: Image.Image, layout: str, x: int, y: int, width: int, color: s
     return img
 
 
-def inpaint_box(img: Image.Image, box: tuple[int, int, int, int]) -> Image.Image:
+def inpaint_boxes(img: Image.Image, boxes: list[tuple[int, int, int, int]]) -> Image.Image:
     rgba = img.convert("RGBA")
     rgb = np.array(rgba.convert("RGB"))
     mask = np.zeros(rgb.shape[:2], dtype=np.uint8)
-    x1, y1, x2, y2 = box
-    mask[y1:y2, x1:x2] = 255
+    for x1, y1, x2, y2 in boxes:
+        mask[y1:y2, x1:x2] = 255
     # Keep card-count corners out of the inpaint mask.
     mask[:150, :105] = 0
     mask[:150, 440:] = 0
@@ -85,7 +95,7 @@ def fix_pack(code: str) -> None:
     path = PACK_DIR / f"{code}-pack.png"
     layout, x, y, width, color = CONFIGS[code]
     img = Image.open(path).convert("RGBA")
-    img = inpaint_box(img, OLD_LOGO_BOX)
+    img = inpaint_boxes(img, [OLD_LOGO_BOX, *EXTRA_REMOVE_BOXES.get(code, [])])
     img = add_logo(img, layout, x, y, width, color)
     img.save(path, optimize=True)
     print(path)

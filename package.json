@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build:lua": "node tools/build-lua-bundle.js"
+    "build:lua": "node tools/build-lua-bundle.js",
+    "validate:fast-caches": "python3 tools/validate-fast-caches.py"
   },
   "devDependencies": {
     "luabundle": "1.7.0"

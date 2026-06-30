@@ -14,9 +14,7 @@ function onLoad(savedData)
     PackBuilder.bindSharedQueryCaches()
     updateObject(false)
     data.lastDescription = self.getDescription()
-    if data.setCode == config.defaultSetCode then
-        self.addContextMenuItem("Spawn Boxes", spawnSupportedPacks)
-    end
+    self.addContextMenuItem("Spawn Sets", spawnSupportedPacks)
 
     AutoUpdater:run(self)
 end
@@ -152,7 +150,7 @@ function updateObject(allowReload)
     end
 
     self.clearButtons()
-    if packImage == config.defaultPackImage then
+    if data.setCode ~= config.defaultSetCode and packImage == config.defaultPackImage then
         self.createButton({
             label = data.setCode .. " Boosters",
             click_function = "noop",
@@ -188,6 +186,7 @@ function spawnSupportedPacks()
                 code = setCode,
                 name = setData.name,
                 date = setData.date,
+                packImage = PackBuilder.getPackImage(setCode, 1),
             })
         end
     end
@@ -220,6 +219,7 @@ function spawnSupportedPacks()
             else
                 copy.setName(setData.code .. " Booster")
             end
+            PackBuilder.applyPackImage(copy, setData.packImage)
         end, (index - 1) * 0.1)
     end
 end

@@ -13,18 +13,18 @@ LOGO_PATH = Path("assets/logos/magic-the-gathering-2017-thumb.png")
 
 CONFIGS = {
     "all": ("vertical_left", 34, 238, 150, "white"),
-    "cns": ("top_right", 308, 108, 160, "gold"),
-    "csp": ("top_left", 54, 108, 165, "white"),
-    "dka": ("top_right", 312, 110, 155, "white"),
+    "cns": ("top_center", 176, 112, 185, "gold"),
+    "csp": ("top_center", 176, 116, 185, "white"),
+    "dka": ("top_center", 176, 112, 185, "white"),
     "dom": ("vertical_left", 34, 250, 150, "gold"),
-    "emn": ("top_right", 316, 112, 155, "white"),
+    "emn": ("top_center", 176, 112, 185, "white"),
     "fdn": ("top_center", 180, 128, 170, "black"),
-    "ice": ("top_right", 312, 118, 155, "white"),
+    "ice": ("top_center", 176, 118, 185, "white"),
     "isd": ("vertical_right", 450, 240, 150, "white"),
-    "mh1": ("top_left", 54, 108, 165, "white"),
+    "mh1": ("top_center", 176, 112, 185, "white"),
     "soi": ("vertical_right", 450, 240, 150, "white"),
-    "war": ("top_left", 54, 110, 165, "white"),
-    "znr": ("top_left", 58, 112, 160, "white"),
+    "war": ("top_center", 176, 112, 185, "white"),
+    "znr": ("top_center", 176, 112, 185, "white"),
 }
 
 OLD_LOGO_BOX = (116, 72, 432, 164)

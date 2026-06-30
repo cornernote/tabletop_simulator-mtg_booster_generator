@@ -256,11 +256,9 @@ end
 PackBuilder.finishQueryCacheLoad = function(query, loadState)
     if #loadState.cards == 0 then
         data.emptyQueryCaches[query] = true
-        PackBuilder.printDebug("cached empty query: " .. query)
     else
         data.queryCaches[query] = loadState.cards
         data.emptyQueryCaches[query] = nil
-        PackBuilder.printDebug("cached query: " .. query .. " (" .. #loadState.cards .. " cards)")
     end
     PackBuilder.publishSharedQueryCaches()
     data.queryCacheLoads[query] = nil
